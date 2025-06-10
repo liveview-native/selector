@@ -1,4 +1,6 @@
 defmodule Selector.Parser.Class do
+  @moduledoc false
+
   import Selector.Parser.Guards
 
   def parse(<<"\\"::utf8, char::utf8, selectors::binary>>, class, opts) when is_escapable_char(char) do

@@ -21,11 +21,16 @@ defmodule Selector.Parser do
     parse_segment(selectors, [], opts)
   end
 
-  defp parse_segment(<<>>, segments, _opts) do
-    Enum.reverse(segments)
+  defp parse_segment(<<char::utf8, selectors::binary>>, segments, opts) when is_whitespace(char) do
+    selectors = drain_whitespace(selectors)
+    parse_segment(selectors, segments, opts)
+  end
+  
+  defp parse_segment(",", _segments, _opts) do
+    raise ArgumentError, "Expected rule but end of input reached."
   end
 
-  defp parse_segment(<<char::utf8, selectors::binary>>, segments, opts) when is_whitespace(char) do
+  defp parse_segment(<<","::utf8, selectors::binary>>, segments, opts) do
     parse_segment(selectors, segments, opts)
   end
 
@@ -34,12 +39,25 @@ defmodule Selector.Parser do
 
     parse_segment(selectors, [{:rule, rules, []} | segments], opts)
   end
+  
+  defp parse_segment(<<>>, [], _opts) do
+    raise ArgumentError, "Expected rule but end of input reached."
+  end
+  
+  defp parse_segment(<<>>, segments, _opts) do
+    Enum.reverse(segments)
+  end
+  
+  defp parse_segment(_selectors, _segments, _opts) do
+    raise ArgumentError, "Expected rule but end of input reached."
+  end
 
   defp parse_rule(<<>>, rules, _opts) do
     {Enum.reverse(rules), ""}
   end
 
   defp parse_rule(<<","::utf8, selectors::binary>>, rules, _opts) do
+    selectors = drain_whitespace(selectors)
     {Enum.reverse(rules), selectors}
   end
 
@@ -93,7 +111,15 @@ defmodule Selector.Parser do
     parse_rule(remaining, [{:pseudo_class, pseudo} | rules], opts)
   end
 
+  defp parse_rule(<<char::utf8, selectors::binary>>, rules, opts) when is_whitespace(char) do
+    parse_rule(selectors, rules, opts)
+  end
+
   defp parse_rule(_selectors, _rules, _opts) do
     raise ArgumentError, "Expected rule but end of input reached."
   end
+
+  defp drain_whitespace(<<char::utf8, selectors::binary>>) when is_whitespace(char),
+    do: drain_whitespace(selectors)
+  defp drain_whitespace(selectors), do: selectors
 end
