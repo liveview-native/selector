@@ -1,21 +1,50 @@
-# Selector
+# CSS Selector Parser with NIF
 
-**TODO: Add description**
+A high-performance CSS selector parser for Elixir, implemented as a NIF using libcss.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `selector` to your list of dependencies in `mix.exs`:
+1. Install libcss development libraries:
+   ```bash
+   # On macOS
+   brew install libcss
+   
+   # On Ubuntu/Debian
+   # sudo apt-get install libcss-dev
+   ```
+
+2. Add `:selector` to your list of dependencies in `mix.exs`:
+
+   ```elixir
+   def deps do
+     [
+       {:selector, "~> 0.1.0"}
+     ]
+   end
+   ```
+
+## Usage
 
 ```elixir
-def deps do
-  [
-    {:selector, "~> 0.1.0"}
-  ]
-end
+# Parse a CSS selector
+{:ok, ast} = Selector.Parser.parse("div#main.content")
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/selector>.
+## Development
+
+To compile the NIF:
+
+```bash
+make
+```
+
+To clean build artifacts:
+
+```bash
+make clean
+```
+
+## License
+
+MIT
 

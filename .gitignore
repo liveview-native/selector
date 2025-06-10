@@ -4,9 +4,6 @@
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
 
-# The directory Mix downloads your dependencies sources to.
-/deps/
-
 # Where third-party dependencies like ExDoc output generated docs.
 /doc/
 
@@ -21,3 +18,10 @@ selector-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Ignore build artifacts but track libcss source
+/deps/*
+!/deps/libcss
+/deps/libcss/build
+/deps/libcss/.git
+/priv/

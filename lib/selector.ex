@@ -4,11 +4,17 @@ defmodule Selector do
     Renderer
   }
 
-  def parser(selector) do
-    Parser.parse(selector)
+  @doc """
+  Parses a CSS selector string into an AST.
+  """
+  def parse(selector, opts \\ []) do
+    Parser.parse(selector, opts)
   end
 
-  def render(selectors) do
-    Renderer.render(selectors)
+  @doc """
+  Renders a selector AST back to a CSS selector string.
+  """
+  def render(selectors, opts \\ []) do
+    Renderer.render(selectors, opts)
   end
 end
