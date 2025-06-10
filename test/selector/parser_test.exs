@@ -588,7 +588,7 @@ defmodule Selector.ParserTest do
 
     test "should parse after tag names" do
       assert Selector.parse("div:link") == [
-        {:rule, [{:tag_name, "div"}, {:pseudo_class, {:link, []}}], []}
+        {:rule, [{:tag_name, "div", []}, {:pseudo_class, {:link, []}}], []}
       ]
     end
 
@@ -608,14 +608,14 @@ defmodule Selector.ParserTest do
       assert Selector.parse(":not(:lang(en), div)") == [
         {:rule, [{:pseudo_class, {:not, [
           [{:rule, [{:pseudo_class, {:lang, ["en"]}}], []}],
-          [{:rule, [{:tag_name, "div"}], []}]
+          [{:rule, [{:tag_name, "div", []}], []}]
         ]}}], []}
       ]
     end
 
     test "should parse after an attribute" do
       assert Selector.parse("[href]:link") == [
-        {:rule, [{:attribute, {:exists, "href"}}, {:pseudo_class, {:link, []}}], []}
+        {:rule, [{:attribute, {:exists, "href", nil, []}}, {:pseudo_class, {:link, []}}], []}
       ]
     end
 
@@ -670,7 +670,7 @@ defmodule Selector.ParserTest do
     test "should parse :not function with complex selectors" do
       assert Selector.parse(":not(div.class)") == [
         {:rule, [{:pseudo_class, {:not, [
-          [{:rule, [{:tag_name, "div"}, {:class, "class"}], []}]
+          [{:rule, [{:tag_name, "div", []}, {:class, "class"}], []}]
         ]}}], []}
       ]
     end
@@ -678,7 +678,7 @@ defmodule Selector.ParserTest do
     test "should parse :is function" do
       assert Selector.parse(":is(div, .class)") == [
         {:rule, [{:pseudo_class, {:is, [
-          [{:rule, [{:tag_name, "div"}], []}],
+          [{:rule, [{:tag_name, "div", []}], []}],
           [{:rule, [{:class, "class"}], []}]
         ]}}], []}
       ]
@@ -687,7 +687,7 @@ defmodule Selector.ParserTest do
     test "should parse :where function" do
       assert Selector.parse(":where(div, .class)") == [
         {:rule, [{:pseudo_class, {:where, [
-          [{:rule, [{:tag_name, "div"}], []}],
+          [{:rule, [{:tag_name, "div", []}], []}],
           [{:rule, [{:class, "class"}], []}]
         ]}}], []}
       ]
@@ -696,7 +696,7 @@ defmodule Selector.ParserTest do
     test "should parse :has function" do
       assert Selector.parse(":has(> div)") == [
         {:rule, [{:pseudo_class, {:has, [
-          [{:rule, [{:tag_name, "div"}], combinator: ">"}]
+          [{:rule, [{:tag_name, "div", []}], combinator: ">"}]
         ]}}], []}
       ]
     end
@@ -704,7 +704,7 @@ defmodule Selector.ParserTest do
     test "should parse :matches function" do
       assert Selector.parse(":matches(div, .class)") == [
         {:rule, [{:pseudo_class, {:matches, [
-          [{:rule, [{:tag_name, "div"}], []}],
+          [{:rule, [{:tag_name, "div", []}], []}],
           [{:rule, [{:class, "class"}], []}]
         ]}}], []}
       ]
@@ -869,7 +869,7 @@ defmodule Selector.ParserTest do
 
     test "should parse pseudo-elements with tag names" do
       assert Selector.parse("div::before") == [
-        {:rule, [{:tag_name, "div"}, {:pseudo_element, {:before, []}}], []}
+        {:rule, [{:tag_name, "div", []}, {:pseudo_element, {:before, []}}], []}
       ]
     end
 
@@ -887,7 +887,7 @@ defmodule Selector.ParserTest do
 
     test "should parse pseudo-elements with attributes" do
       assert Selector.parse("[attr]::before") == [
-        {:rule, [{:attribute, {:exists, "attr"}}, {:pseudo_element, {:before, []}}], []}
+        {:rule, [{:attribute, {:exists, "attr", nil, []}}, {:pseudo_element, {:before, []}}], []}
       ]
     end
 
