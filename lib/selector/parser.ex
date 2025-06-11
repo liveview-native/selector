@@ -12,13 +12,21 @@ defmodule Selector.Parser do
   }
 
   import Selector.Parser.Guards
+  import Selector.Parser.Utils
 
   @doc """
   Parses a CSS selector string into an AST.
   Accepts an optional keyword list of options.
   """
   def parse(selectors, opts \\ []) when is_binary(selectors) do
+    selectors = drain_whitespace(selectors)
     parse_segment(selectors, [], opts)
+  end
+
+  # this is meant specifically to close out
+  # nested segments within pseudo params
+  defp parse_segment(<<")"::utf8, selectors::binary>>, segments, _opts) do
+    {Enum.reverse(segments), selectors}
   end
 
   defp parse_segment(<<char::utf8, selectors::binary>>, segments, opts) when is_whitespace(char) do
@@ -31,6 +39,7 @@ defmodule Selector.Parser do
   end
 
   defp parse_segment(<<","::utf8, selectors::binary>>, segments, opts) do
+    selectors = drain_whitespace(selectors)
     parse_segment(selectors, segments, opts)
   end
 
@@ -57,8 +66,10 @@ defmodule Selector.Parser do
   end
 
   defp parse_rule(<<","::utf8, selectors::binary>>, rules, _opts) do
-    selectors = drain_whitespace(selectors)
-    {Enum.reverse(rules), selectors}
+    case drain_whitespace(selectors) do
+      <<>> -> raise ArgumentError, "Expected rule but end of input reached."
+      selectors -> {Enum.reverse(rules), selectors}
+    end
   end
 
   defp parse_rule(<<"#"::utf8, selectors::binary>>, rules, opts) do
@@ -75,7 +86,7 @@ defmodule Selector.Parser do
     {tag_name, selectors, tag_opts} = TagName.parse(selectors, ["*"], opts)
     parse_rule(selectors, [{:tag_name, tag_name, tag_opts} | rules], opts)
   end
-
+LL
   defp parse_rule(<<"\\*"::utf8, selectors::binary>>, rules, opts) do
     {tag_name, selectors, tag_opts} = TagName.parse(selectors, ["*"], opts)
     parse_rule(selectors, [{:tag_name, tag_name, tag_opts} | rules], opts)
@@ -106,6 +117,28 @@ defmodule Selector.Parser do
     parse_rule(remaining, [{:pseudo_element, pseudo_element} | rules], opts)
   end
 
+  # Legacy CSS Level 2 support for single-colon pseduo elements
+ 
+  defp parse_rule(<<":before"::utf8, rest::binary>>, rules, opts) do
+    {pseudo, remaining} = Pseudo.parse(rest, opts)
+    parse_rule(remaining, [{:pseudo_element, pseudo} | rules], opts)
+  end
+ 
+  defp parse_rule(<<":after"::utf8, rest::binary>>, rules, opts) do
+    {pseudo, remaining} = Pseudo.parse(rest, opts)
+    parse_rule(remaining, [{:pseudo_element, pseudo} | rules], opts)
+  end
+ 
+  defp parse_rule(<<":first-line"::utf8, rest::binary>>, rules, opts) do
+    {pseudo, remaining} = Pseudo.parse(rest, opts)
+    parse_rule(remaining, [{:pseudo_element, pseudo} | rules], opts)
+  end
+ 
+  defp parse_rule(<<":first-letter"::utf8, rest::binary>>, rules, opts) do
+    {pseudo, remaining} = Pseudo.parse(rest, opts)
+    parse_rule(remaining, [{:pseudo_element, pseudo} | rules], opts)
+  end
+
   defp parse_rule(<<":"::utf8, rest::binary>>, rules, opts) do
     {pseudo, remaining} = Pseudo.parse(rest, opts)
     parse_rule(remaining, [{:pseudo_class, pseudo} | rules], opts)
@@ -118,8 +151,4 @@ defmodule Selector.Parser do
   defp parse_rule(_selectors, _rules, _opts) do
     raise ArgumentError, "Expected rule but end of input reached."
   end
-
-  defp drain_whitespace(<<char::utf8, selectors::binary>>) when is_whitespace(char),
-    do: drain_whitespace(selectors)
-  defp drain_whitespace(selectors), do: selectors
 end

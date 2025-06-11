@@ -221,13 +221,13 @@ defmodule Selector.ParserTest do
 
     test "should parse after a pseudo-class" do
       assert Selector.parse(":link.class") == [
-        {:rule, [{:pseudo_class, {:link, []}}, {:class, "class"}], []}
+        {:rule, [{:pseudo_class, {"link", []}}, {:class, "class"}], []}
       ]
     end
 
     test "should parse after a pseudo-element" do
       assert Selector.parse("::before.class") == [
-        {:rule, [{:pseudo_element, {:before, []}}, {:class, "class"}], []}
+        {:rule, [{:pseudo_element, {"before", []}}, {:class, "class"}], []}
       ]
     end
 
@@ -296,13 +296,13 @@ defmodule Selector.ParserTest do
 
     test "should parse after a pseudo-class" do
       assert Selector.parse(":link#id") == [
-        {:rule, [{:pseudo_class, {:link, []}}, {:id, "id"}], []}
+        {:rule, [{:pseudo_class, {"link", []}}, {:id, "id"}], []}
       ]
     end
 
     test "should parse after a pseudo-element" do
       assert Selector.parse("::before#id") == [
-        {:rule, [{:pseudo_element, {:before, []}}, {:id, "id"}], []}
+        {:rule, [{:pseudo_element, {"before", []}}, {:id, "id"}], []}
       ]
     end
 
@@ -444,13 +444,13 @@ defmodule Selector.ParserTest do
 
     test "should parse after a pseudo-class" do
       assert Selector.parse(":link[attr]") == [
-        {:rule, [{:pseudo_class, {:link, []}}, {:attribute, {:exists, "attr", nil, []}}], []}
+        {:rule, [{:pseudo_class, {"link", []}}, {:attribute, {:exists, "attr", nil, []}}], []}
       ]
     end
 
     test "should parse after a pseudo-element" do
       assert Selector.parse("::before[attr]") == [
-        {:rule, [{:pseudo_element, {:before, []}}, {:attribute, {:exists, "attr", nil, []}}], []}
+        {:rule, [{:pseudo_element, {"before", []}}, {:attribute, {:exists, "attr", nil, []}}], []}
       ]
     end
 
@@ -518,22 +518,22 @@ defmodule Selector.ParserTest do
   describe "Pseudo Classes" do
     test "should parse a pseudo-class" do
       assert Selector.parse(":link") == [
-        {:rule, [{:pseudo_class, {:link, []}}], []}
+        {:rule, [{:pseudo_class, {"link", []}}], []}
       ]
     end
 
     test "should parse multiple pseudo classes" do
       assert Selector.parse(":link:visited") == [
         {:rule, [
-          {:pseudo_class, {:link, []}},
-          {:pseudo_class, {:visited, []}}
+          {:pseudo_class, {"link", []}},
+          {:pseudo_class, {"visited", []}}
         ], []}
       ]
     end
 
     test "should properly parse pseudo classes" do
       assert Selector.parse(":\\l\\69\\n\\6b") == [
-        {:rule, [{:pseudo_class, {:link, []}}], []}
+        {:rule, [{:pseudo_class, {"link", []}}], []}
       ]
     end
 
@@ -541,7 +541,7 @@ defmodule Selector.ParserTest do
       for formula <- [":nth-child(0n+5)", ":nth-child( 0n + 5 )", ":nth-child( 0n+5 )",
                       ":nth-child(5)", ":nth-child( 5 )", ":nth-child( +5 )"] do
         assert Selector.parse(formula) == [
-          {:rule, [{:pseudo_class, {:nth_child, [a: 0, b: 5]}}], []}
+          {:rule, [{:pseudo_class, {"nth-child", [a: 0, b: 5]}}], []}
         ]
       end
     end
@@ -550,7 +550,7 @@ defmodule Selector.ParserTest do
       for formula <- [":nth-child(0n-5)", ":nth-child( 0n - 5 )", ":nth-child( 0n-5 )",
                       ":nth-child(-5)", ":nth-child( -5 )"] do
         assert Selector.parse(formula) == [
-          {:rule, [{:pseudo_class, {:nth_child, [a: 0, b: -5]}}], []}
+          {:rule, [{:pseudo_class, {"nth-child", [a: 0, b: -5]}}], []}
         ]
       end
     end
@@ -559,7 +559,7 @@ defmodule Selector.ParserTest do
       for formula <- [":nth-child(3n+0)", ":nth-child( 3\\n + 0 )", ":nth-child( 3\\6e+0 )",
                       ":nth-child(3n)", ":nth-child( 3n )", ":nth-child( +3n )"] do
         assert Selector.parse(formula) == [
-          {:rule, [{:pseudo_class, {:nth_child, [a: 3, b: 0]}}], []}
+          {:rule, [{:pseudo_class, {"nth-child", [a: 3, b: 0]}}], []}
         ]
       end
     end
@@ -567,7 +567,7 @@ defmodule Selector.ParserTest do
     test "should properly parse even" do
       for formula <- [":nth-child(even)", ":nth-child( even )", ":nth-child( 2n )"] do
         assert Selector.parse(formula) == [
-          {:rule, [{:pseudo_class, {:nth_child, [a: 2, b: 0]}}], []}
+          {:rule, [{:pseudo_class, {"nth-child", [a: 2, b: 0]}}], []}
         ]
       end
     end
@@ -575,39 +575,39 @@ defmodule Selector.ParserTest do
     test "should properly parse odd" do
       for formula <- [":nth-child( 2n + 1 )", ":nth-child( odd )"] do
         assert Selector.parse(formula) == [
-          {:rule, [{:pseudo_class, {:nth_child, [a: 2, b: 1]}}], []}
+          {:rule, [{:pseudo_class, {"nth-child", [a: 2, b: 1]}}], []}
         ]
       end
     end
 
     test "should properly handle whitespace" do
       assert Selector.parse(":lang( en )") == [
-        {:rule, [{:pseudo_class, {:lang, ["en"]}}], []}
+        {:rule, [{:pseudo_class, {"lang", ["en"]}}], []}
       ]
     end
 
     test "should parse after tag names" do
       assert Selector.parse("div:link") == [
-        {:rule, [{:tag_name, "div", []}, {:pseudo_class, {:link, []}}], []}
+        {:rule, [{:tag_name, "div", []}, {:pseudo_class, {"link", []}}], []}
       ]
     end
 
     test "should parse after IDs" do
       assert Selector.parse("#id:link") == [
-        {:rule, [{:id, "id"}, {:pseudo_class, {:link, []}}], []}
+        {:rule, [{:id, "id"}, {:pseudo_class, {"link", []}}], []}
       ]
     end
 
     test "should parse after classes" do
       assert Selector.parse(".class:link") == [
-        {:rule, [{:class, "class"}, {:pseudo_class, {:link, []}}], []}
+        {:rule, [{:class, "class"}, {:pseudo_class, {"link", []}}], []}
       ]
     end
 
     test "should parse nested selectors" do
       assert Selector.parse(":not(:lang(en), div)") == [
-        {:rule, [{:pseudo_class, {:not, [
-          [{:rule, [{:pseudo_class, {:lang, ["en"]}}], []}],
+        {:rule, [{:pseudo_class, {"not", [
+          [{:rule, [{:pseudo_class, {"lang", ["en"]}}], []}],
           [{:rule, [{:tag_name, "div", []}], []}]
         ]}}], []}
       ]
@@ -615,13 +615,13 @@ defmodule Selector.ParserTest do
 
     test "should parse after an attribute" do
       assert Selector.parse("[href]:link") == [
-        {:rule, [{:attribute, {:exists, "href", nil, []}}, {:pseudo_class, {:link, []}}], []}
+        {:rule, [{:attribute, {:exists, "href", nil, []}}, {:pseudo_class, {"link", []}}], []}
       ]
     end
 
     test "should parse after a pseudo-element" do
       assert Selector.parse("::before:hover") == [
-        {:rule, [{:pseudo_element, {:before, []}}, {:pseudo_class, {:hover, []}}], []}
+        {:rule, [{:pseudo_element, {"before", []}}, {:pseudo_class, {"hover", []}}], []}
       ]
     end
 
@@ -637,39 +637,33 @@ defmodule Selector.ParserTest do
       end
     end
 
-    test "should fail if not enabled" do
-      assert_raise ArgumentError, "Pseudo-classes are not enabled.", fn ->
-        Selector.parse(":link", syntax: %{})
-      end
-    end
-
     test "should parse :nth functions" do
       assert Selector.parse(":nth-child(2n+1)") == [
-        {:rule, [{:pseudo_class, {:nth_child, [a: 2, b: 1]}}], []}
+        {:rule, [{:pseudo_class, {"nth-child", [a: 2, b: 1]}}], []}
       ]
     end
 
     test "should parse :nth-of-type functions" do
       assert Selector.parse(":nth-of-type(2n)") == [
-        {:rule, [{:pseudo_class, {:nth_of_type, [a: 2, b: 0]}}], []}
+        {:rule, [{:pseudo_class, {"nth-of-type", [a: 2, b: 0]}}], []}
       ]
     end
 
     test "should parse :nth-last-child functions" do
       assert Selector.parse(":nth-last-child(2n+1)") == [
-        {:rule, [{:pseudo_class, {:nth_last_child, [a: 2, b: 1]}}], []}
+        {:rule, [{:pseudo_class, {"nth-last-child", [a: 2, b: 1]}}], []}
       ]
     end
 
     test "should parse :nth-last-of-type functions" do
       assert Selector.parse(":nth-last-of-type(2n)") == [
-        {:rule, [{:pseudo_class, {:nth_last_of_type, [a: 2, b: 0]}}], []}
+        {:rule, [{:pseudo_class, {"nth-last-of-type", [a: 2, b: 0]}}], []}
       ]
     end
 
     test "should parse :not function with complex selectors" do
       assert Selector.parse(":not(div.class)") == [
-        {:rule, [{:pseudo_class, {:not, [
+        {:rule, [{:pseudo_class, {"not", [
           [{:rule, [{:tag_name, "div", []}, {:class, "class"}], []}]
         ]}}], []}
       ]
@@ -677,7 +671,7 @@ defmodule Selector.ParserTest do
 
     test "should parse :is function" do
       assert Selector.parse(":is(div, .class)") == [
-        {:rule, [{:pseudo_class, {:is, [
+        {:rule, [{:pseudo_class, {"is", [
           [{:rule, [{:tag_name, "div", []}], []}],
           [{:rule, [{:class, "class"}], []}]
         ]}}], []}
@@ -686,7 +680,7 @@ defmodule Selector.ParserTest do
 
     test "should parse :where function" do
       assert Selector.parse(":where(div, .class)") == [
-        {:rule, [{:pseudo_class, {:where, [
+        {:rule, [{:pseudo_class, {"where", [
           [{:rule, [{:tag_name, "div", []}], []}],
           [{:rule, [{:class, "class"}], []}]
         ]}}], []}
@@ -695,7 +689,7 @@ defmodule Selector.ParserTest do
 
     test "should parse :has function" do
       assert Selector.parse(":has(> div)") == [
-        {:rule, [{:pseudo_class, {:has, [
+        {:rule, [{:pseudo_class, {"has", [
           [{:rule, [{:tag_name, "div", []}], combinator: ">"}]
         ]}}], []}
       ]
@@ -703,7 +697,7 @@ defmodule Selector.ParserTest do
 
     test "should parse :matches function" do
       assert Selector.parse(":matches(div, .class)") == [
-        {:rule, [{:pseudo_class, {:matches, [
+        {:rule, [{:pseudo_class, {"matches", [
           [{:rule, [{:tag_name, "div", []}], []}],
           [{:rule, [{:class, "class"}], []}]
         ]}}], []}
@@ -712,106 +706,106 @@ defmodule Selector.ParserTest do
 
     test "should parse language pseudo-class" do
       assert Selector.parse(":lang(en-US)") == [
-        {:rule, [{:pseudo_class, {:lang, ["en-US"]}}], []}
+        {:rule, [{:pseudo_class, {"lang", ["en-US"]}}], []}
       ]
     end
 
     test "should parse structural pseudo-classes" do
       assert Selector.parse(":first-child") == [
-        {:rule, [{:pseudo_class, {:first_child, []}}], []}
+        {:rule, [{:pseudo_class, {"first-child", []}}], []}
       ]
       assert Selector.parse(":last-child") == [
-        {:rule, [{:pseudo_class, {:last_child, []}}], []}
+        {:rule, [{:pseudo_class, {"last-child", []}}], []}
       ]
       assert Selector.parse(":only-child") == [
-        {:rule, [{:pseudo_class, {:only_child, []}}], []}
+        {:rule, [{:pseudo_class, {"only-child", []}}], []}
       ]
       assert Selector.parse(":first-of-type") == [
-        {:rule, [{:pseudo_class, {:first_of_type, []}}], []}
+        {:rule, [{:pseudo_class, {"first-of-type", []}}], []}
       ]
       assert Selector.parse(":last-of-type") == [
-        {:rule, [{:pseudo_class, {:last_of_type, []}}], []}
+        {:rule, [{:pseudo_class, {"last-of-type", []}}], []}
       ]
       assert Selector.parse(":only-of-type") == [
-        {:rule, [{:pseudo_class, {:only_of_type, []}}], []}
+        {:rule, [{:pseudo_class, {"only-of-type", []}}], []}
       ]
     end
 
     test "should parse tree-structural pseudo-classes" do
       assert Selector.parse(":root") == [
-        {:rule, [{:pseudo_class, {:root, []}}], []}
+        {:rule, [{:pseudo_class, {"root", []}}], []}
       ]
       assert Selector.parse(":empty") == [
-        {:rule, [{:pseudo_class, {:empty, []}}], []}
+        {:rule, [{:pseudo_class, {"empty", []}}], []}
       ]
     end
 
     test "should parse UI state pseudo-classes" do
       assert Selector.parse(":checked") == [
-        {:rule, [{:pseudo_class, {:checked, []}}], []}
+        {:rule, [{:pseudo_class, {"checked", []}}], []}
       ]
       assert Selector.parse(":enabled") == [
-        {:rule, [{:pseudo_class, {:enabled, []}}], []}
+        {:rule, [{:pseudo_class, {"enabled", []}}], []}
       ]
       assert Selector.parse(":disabled") == [
-        {:rule, [{:pseudo_class, {:disabled, []}}], []}
+        {:rule, [{:pseudo_class, {"disabled", []}}], []}
       ]
       assert Selector.parse(":required") == [
-        {:rule, [{:pseudo_class, {:required, []}}], []}
+        {:rule, [{:pseudo_class, {"required", []}}], []}
       ]
       assert Selector.parse(":optional") == [
-        {:rule, [{:pseudo_class, {:optional, []}}], []}
+        {:rule, [{:pseudo_class, {"optional", []}}], []}
       ]
       assert Selector.parse(":read-only") == [
-        {:rule, [{:pseudo_class, {:read_only, []}}], []}
+        {:rule, [{:pseudo_class, {"read-only", []}}], []}
       ]
       assert Selector.parse(":read-write") == [
-        {:rule, [{:pseudo_class, {:read_write, []}}], []}
+        {:rule, [{:pseudo_class, {"read-write", []}}], []}
       ]
       assert Selector.parse(":valid") == [
-        {:rule, [{:pseudo_class, {:valid, []}}], []}
+        {:rule, [{:pseudo_class, {"valid", []}}], []}
       ]
       assert Selector.parse(":invalid") == [
-        {:rule, [{:pseudo_class, {:invalid, []}}], []}
+        {:rule, [{:pseudo_class, {"invalid", []}}], []}
       ]
       assert Selector.parse(":in-range") == [
-        {:rule, [{:pseudo_class, {:in_range, []}}], []}
+        {:rule, [{:pseudo_class, {"in-range", []}}], []}
       ]
       assert Selector.parse(":out-of-range") == [
-        {:rule, [{:pseudo_class, {:out_of_range, []}}], []}
+        {:rule, [{:pseudo_class, {"out-of-range", []}}], []}
       ]
     end
 
     test "should parse target and link pseudo-classes" do
       assert Selector.parse(":target") == [
-        {:rule, [{:pseudo_class, {:target, []}}], []}
+        {:rule, [{:pseudo_class, {"target", []}}], []}
       ]
       assert Selector.parse(":link") == [
-        {:rule, [{:pseudo_class, {:link, []}}], []}
+        {:rule, [{:pseudo_class, {"link", []}}], []}
       ]
       assert Selector.parse(":visited") == [
-        {:rule, [{:pseudo_class, {:visited, []}}], []}
+        {:rule, [{:pseudo_class, {"visited", []}}], []}
       ]
       assert Selector.parse(":hover") == [
-        {:rule, [{:pseudo_class, {:hover, []}}], []}
+        {:rule, [{:pseudo_class, {"hover", []}}], []}
       ]
       assert Selector.parse(":active") == [
-        {:rule, [{:pseudo_class, {:active, []}}], []}
+        {:rule, [{:pseudo_class, {"active", []}}], []}
       ]
       assert Selector.parse(":focus") == [
-        {:rule, [{:pseudo_class, {:focus, []}}], []}
+        {:rule, [{:pseudo_class, {"focus", []}}], []}
       ]
     end
 
     test "should parse CSS Level 4 pseudo-classes" do
       assert Selector.parse(":any-link") == [
-        {:rule, [{:pseudo_class, {:any_link, []}}], []}
+        {:rule, [{:pseudo_class, {"any-link", []}}], []}
       ]
       assert Selector.parse(":focus-within") == [
-        {:rule, [{:pseudo_class, {:focus_within, []}}], []}
+        {:rule, [{:pseudo_class, {"focus-within", []}}], []}
       ]
       assert Selector.parse(":focus-visible") == [
-        {:rule, [{:pseudo_class, {:focus_visible, []}}], []}
+        {:rule, [{:pseudo_class, {"focus-visible", []}}], []}
       ]
     end
   end
@@ -819,75 +813,75 @@ defmodule Selector.ParserTest do
   describe "Pseudo Elements" do
     test "should parse a pseudo-class" do
       assert Selector.parse("::before") == [
-        {:rule, [{:pseudo_element, {:before, []}}], []}
+        {:rule, [{:pseudo_element, {"before", []}}], []}
       ]
     end
 
     test "should parse a parametrized pseudo-element" do
       assert Selector.parse("::slotted(span)") == [
-        {:rule, [{:pseudo_element, {:slotted, ["span"]}}], []}
+        {:rule, [{:pseudo_element, {"slotted", ["span"]}}], []}
       ]
     end
 
     test "should parse pseudo-elements with content" do
       assert Selector.parse("::after") == [
-        {:rule, [{:pseudo_element, {:after, []}}], []}
+        {:rule, [{:pseudo_element, {"after", []}}], []}
       ]
     end
 
     test "should parse ::before and ::after" do
       assert Selector.parse("::before") == [
-        {:rule, [{:pseudo_element, {:before, []}}], []}
+        {:rule, [{:pseudo_element, {"before", []}}], []}
       ]
 
       assert Selector.parse("::after") == [
-        {:rule, [{:pseudo_element, {:after, []}}], []}
+        {:rule, [{:pseudo_element, {"after", []}}], []}
       ]
     end
 
     test "should parse ::first-line and ::first-letter" do
       assert Selector.parse("::first-line") == [
-        {:rule, [{:pseudo_element, {:first_line, []}}], []}
+        {:rule, [{:pseudo_element, {"first-line", []}}], []}
       ]
 
       assert Selector.parse("::first-letter") == [
-        {:rule, [{:pseudo_element, {:first_letter, []}}], []}
+        {:rule, [{:pseudo_element, {"first-letter", []}}], []}
       ]
     end
 
     test "should parse modern double-colon syntax" do
       assert Selector.parse("::selection") == [
-        {:rule, [{:pseudo_element, {:selection, []}}], []}
+        {:rule, [{:pseudo_element, {"selection", []}}], []}
       ]
     end
 
     test "should parse legacy single-colon syntax" do
       assert Selector.parse(":before") == [
-        {:rule, [{:pseudo_element, {:before, []}}], []}
+        {:rule, [{:pseudo_element, {"before", []}}], []}
       ]
     end
 
     test "should parse pseudo-elements with tag names" do
       assert Selector.parse("div::before") == [
-        {:rule, [{:tag_name, "div", []}, {:pseudo_element, {:before, []}}], []}
+        {:rule, [{:tag_name, "div", []}, {:pseudo_element, {"before", []}}], []}
       ]
     end
 
     test "should parse pseudo-elements with class names" do
       assert Selector.parse(".class::before") == [
-        {:rule, [{:class, "class"}, {:pseudo_element, {:before, []}}], []}
+        {:rule, [{:class, "class"}, {:pseudo_element, {"before", []}}], []}
       ]
     end
 
     test "should parse pseudo-elements with IDs" do
       assert Selector.parse("#id::before") == [
-        {:rule, [{:id, "id"}, {:pseudo_element, {:before, []}}], []}
+        {:rule, [{:id, "id"}, {:pseudo_element, {"before", []}}], []}
       ]
     end
 
     test "should parse pseudo-elements with attributes" do
       assert Selector.parse("[attr]::before") == [
-        {:rule, [{:attribute, {:exists, "attr", nil, []}}, {:pseudo_element, {:before, []}}], []}
+        {:rule, [{:attribute, {:exists, "attr", nil,}}, {:pseudo_element, {"before", []}}], []}
       ]
     end
 
@@ -899,29 +893,23 @@ defmodule Selector.ParserTest do
 
     test "should handle vendor-specific pseudo-elements" do
       assert Selector.parse("::-webkit-input-placeholder") == [
-        {:rule, [{:pseudo_element, {:webkit_input_placeholder, []}}], []}
+        {:rule, [{:pseudo_element, {"-webkit-input-placeholder", []}}], []}
       ]
     end
 
     test "should parse CSS Level 4 pseudo-elements" do
       assert Selector.parse("::placeholder") == [
-        {:rule, [{:pseudo_element, {:placeholder, []}}], []}
+        {:rule, [{:pseudo_element, {"placeholder", []}}], []}
       ]
       assert Selector.parse("::backdrop") == [
-        {:rule, [{:pseudo_element, {:backdrop, []}}], []}
+        {:rule, [{:pseudo_element, {"backdrop", []}}], []}
       ]
       assert Selector.parse("::marker") == [
-        {:rule, [{:pseudo_element, {:marker, []}}], []}
+        {:rule, [{:pseudo_element, {"marker", []}}], []}
       ]
       assert Selector.parse("::cue") == [
-        {:rule, [{:pseudo_element, {:cue, []}}], []}
+        {:rule, [{:pseudo_element, {"cue", []}}], []}
       ]
-    end
-
-    test "should fail if not enabled" do
-      assert_raise ArgumentError, "Pseudo-elements are not enabled.", fn ->
-        Selector.parse("::before", syntax: %{})
-      end
     end
 
     # Note: While CSS3 specifies pseudo-elements should be at the end,
@@ -958,7 +946,7 @@ defmodule Selector.ParserTest do
         Selector.parse("div, .class,")
       end
 
-      assert_raise ArgumentError, fn ->
+      assert_raise ArgumentError, "Expected rule but end of input reached.", fn ->
         Selector.parse("div, .class, $")
       end
     end
@@ -973,8 +961,8 @@ defmodule Selector.ParserTest do
           {:class, "class1"},
           {:class, "class2"},
           {:attribute, {:equal, "attr", "value", []}},
-          {:pseudo_class, {:hover, []}},
-          {:pseudo_element, {:before, []}}
+          {:pseudo_class, {"hover", []}},
+          {:pseudo_element, {"before", []}}
         ], []}
       ]
     end
@@ -1066,11 +1054,11 @@ defmodule Selector.ParserTest do
     test "should handle deeply nested selectors" do
       nested = ":not(:not(:not(:not(:not(.class)))))"
       assert Selector.parse(nested) == [
-        {:rule, [{:pseudo_class, {:not, [
-          [{:rule, [{:pseudo_class, {:not, [
-            [{:rule, [{:pseudo_class, {:not, [
-              [{:rule, [{:pseudo_class, {:not, [
-                [{:rule, [{:pseudo_class, {:not, [
+        {:rule, [{:pseudo_class, {"not", [
+          [{:rule, [{:pseudo_class, {"not", [
+            [{:rule, [{:pseudo_class, {"not", [
+              [{:rule, [{:pseudo_class, {"not", [
+                [{:rule, [{:pseudo_class, {"not", [
                   [{:rule, [{:class, "class"}], []}]
                 ]}}], []}]
               ]}}], []}]
@@ -1091,7 +1079,7 @@ defmodule Selector.ParserTest do
 
     test "should parse nth-child with negative coefficients" do
       assert Selector.parse(":nth-child(-n+3)") == [
-        {:rule, [{:pseudo_class, {:nth_child, [a: -1, b: 3]}}], []}
+        {:rule, [{:pseudo_class, {"nth-child", [a: -1, b: 3]}}], []}
       ]
     end
 
