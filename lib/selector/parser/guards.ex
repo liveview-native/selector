@@ -114,11 +114,8 @@
     (
       (codepoint >= ?0 and codepoint <= ?9) or
       (codepoint >= ?a and codepoint <= ?f) or
-      (codepoint >= ?A and codepoint <= ?F) or
-      # Fullwidth hex digits
-      (codepoint >= 0xFF10 and codepoint <= 0xFF19) or # 0-9
-      (codepoint >= 0xFF21 and codepoint <= 0xFF26) or # A-F
-      (codepoint >= 0xFF41 and codepoint <= 0xFF46)    # a-f
+      (codepoint >= ?A and codepoint <= ?F)
+      # CSS spec only accepts ASCII hex digits in escape sequences
     )
 
   defguardp is_non_ascii(codepoint) when
@@ -213,9 +210,19 @@
 
   @doc """
   Guard: Checks if a codepoint is a CSS combinator character.
+  This includes single-character combinators: >, +, ~
+  Note: Whitespace (descendant combinator) is handled by is_whitespace/1
+  Note: Column combinator || is two characters and must be handled at parser level
+  """
+  defguard is_combinator_char(codepoint) when
+    is_integer(codepoint) and codepoint in @combinator_chars
+
+  @doc """
+  Guard: Checks if a codepoint is a CSS combinator character.
+  Alias for is_combinator_char/1 for backward compatibility.
   """
   defguard is_combinator(codepoint) when
-    is_integer(codepoint) and codepoint in @combinator_chars
+    is_combinator_char(codepoint)
 
   @doc """
   Guard: Checks if a codepoint is a CSS delimiter character.
@@ -231,7 +238,7 @@
 
   @doc """
   Guard: Checks if a codepoint is a valid hexadecimal digit for CSS escape sequences.
-  Now supports UTF-8 hexadecimal digits including fullwidth characters.
+  Only ASCII hex digits (0-9, a-f, A-F) are valid in CSS escape sequences.
   """
   defguard is_hex_digit(codepoint) when
     is_utf8_hex_digit(codepoint)
@@ -358,12 +365,12 @@
 
   @doc """
   Guard: Checks if a codepoint is valid within CSS comment content.
-  Excludes only the comment end sequence characters when they appear together.
+  Note: This guard checks individual characters. The parser must handle
+  the */ sequence detection at a higher level.
+  All characters are valid in comments except when * and / appear together as */.
   """
   defguard is_comment_char(codepoint) when
-    is_integer(codepoint) and
-    codepoint != 0x002A and                 # * (when not followed by /)
-    codepoint != 0x002F                     # / (when not preceded by *)
+    is_integer(codepoint)                   # All characters are valid individually
 
   @doc """
   Guard: Checks if a codepoint is valid for CSS attribute values.
@@ -425,46 +432,62 @@
   @doc """
   Guard: Checks if a codepoint is valid as the first character of a pseudo-class or pseudo-element name.
 
+  Pseudo-class and pseudo-element names follow the same rules as CSS identifiers,
+  with one exception: they can also start with a hyphen for vendor prefixes.
+  
   Valid starting characters are:
   - Any letter (a-z, A-Z)
   - Underscore (_)
-  - Hyphen (-)
-  - Any non-ASCII character (Unicode > 0x7F)
+  - Hyphen (-) for vendor-specific pseudo-classes like -webkit-scrollbar
+  - Any non-ASCII character (Unicode >= 0x80)
   """
   defguard is_pseudo_start_char(codepoint) when
-    is_integer(codepoint) and (
-      (codepoint >= ?a and codepoint <= ?z) or
-      (codepoint >= ?A and codepoint <= ?Z) or
-      codepoint == ?_ or
-      codepoint == ?- or
-      (codepoint >= 0x00A0 and codepoint <= 0x10FFFF)  # Non-ASCII chars
-    )
+    is_identifier_start_char(codepoint) or
+    codepoint == ?-  # Allow hyphen for vendor prefixes
 
   @doc """
   Guard: Checks if a codepoint is valid within a pseudo-class or pseudo-element name.
 
+  Pseudo-class and pseudo-element names follow the same rules as CSS identifiers.
   Valid characters include:
   - Any letter (a-z, A-Z)
   - Digits (0-9)
   - Underscore (_)
   - Hyphen (-)
-  - Parentheses (for functional pseudo-classes)
-  - Whitespace (for arguments)
-  - Any non-ASCII character (Unicode > 0x7F)
+  - Any non-ASCII character (Unicode >= 0x80)
+  
+  Note: Parentheses, whitespace, and other special characters are NOT part of the 
+  pseudo-class name itself. They are handled separately as part of functional notation.
   """
   defguard is_pseudo_char(codepoint) when
-    is_integer(codepoint) and (
+    is_identifier_char(codepoint)
+
+  @doc """
+  Guard: Checks if a codepoint is valid for a language tag character.
+  Language tags (BCP 47) can contain:
+  - ASCII letters (a-z, A-Z)
+  - ASCII digits (0-9)
+  - Hyphen (-) as separator
+  Used for :lang() pseudo-class values like 'en', 'en-US', 'zh-Hans-CN'
+  """
+  defguard is_lang_char(codepoint) when
+    is_integer(codepoint) and
+    (
       (codepoint >= ?a and codepoint <= ?z) or
       (codepoint >= ?A and codepoint <= ?Z) or
       (codepoint >= ?0 and codepoint <= ?9) or
-      codepoint == ?_ or
-      codepoint == ?- or
-      codepoint == ?( or
-      codepoint == ?) or
-      codepoint == ?+ or  # For expressions like 2n+1 in :nth-child
-      codepoint == ?\s or # Space
-      codepoint == 0x0009 or # Tab
-      (codepoint >= 0x00A0 and codepoint <= 0x10FFFF)  # Non-ASCII chars
+      codepoint == ?-                       # hyphen separator
+    )
+
+  @doc """
+  Guard: Checks if a codepoint can start a language tag.
+  Language tags must start with a letter (not digit or hyphen).
+  """
+  defguard is_lang_start_char(codepoint) when
+    is_integer(codepoint) and
+    (
+      (codepoint >= ?a and codepoint <= ?z) or
+      (codepoint >= ?A and codepoint <= ?Z)
     )
 
   @doc """
@@ -476,5 +499,110 @@
     codepoint >= 0 and
     codepoint <= 0x10FFFF and
     not is_surrogate_codepoint(codepoint)
+
+  @doc """
+  Guard: Checks if a codepoint is valid within an nth-formula.
+  Nth-formulas are used in pseudo-classes like :nth-child(), :nth-of-type(), etc.
+  Valid characters include: digits (0-9), letters (n,o,d,e,v), operators (+,-), and CSS whitespace.
+  Examples: '2n+1', 'odd', 'even', '3n-2', '-n+5'
+  """
+  defguard is_nth_formula_char(codepoint) when
+    is_integer(codepoint) and
+    (
+      (codepoint >= ?0 and codepoint <= ?9) or    # ASCII digits
+      codepoint == ?n or codepoint == ?N or       # Variable n (case-insensitive)
+      codepoint == ?o or codepoint == ?O or       # For "odd" keyword
+      codepoint == ?d or codepoint == ?D or       # For "odd" keyword  
+      codepoint == ?e or codepoint == ?E or       # For "even" keyword
+      codepoint == ?v or codepoint == ?V or       # For "even" keyword
+      codepoint == ?+ or                          # Plus operator/sign
+      codepoint == ?- or                          # Minus operator/sign
+      is_whitespace(codepoint)                    # CSS whitespace
+    )
+
+  @doc """
+  Guard: Checks if a codepoint can start an nth-formula.
+  Nth-formulas can start with: digits, signs (+/-), the variable n, keyword letters (o,e), or whitespace.
+  Examples starting chars: '2' (2n+1), '+' (+n), '-' (-n+3), 'n' (n+1), 'o' (odd), 'e' (even)
+  """
+  defguard is_nth_formula_starting_char(codepoint) when
+    is_integer(codepoint) and
+    (
+      (codepoint >= ?0 and codepoint <= ?9) or    # ASCII digits (for integers/coefficients)
+      codepoint == ?+ or                          # Plus sign (explicit positive)
+      codepoint == ?- or                          # Minus sign (negative values)
+      codepoint == ?n or codepoint == ?N or       # Variable n (for "n+1", "n", etc.)
+      codepoint == ?o or codepoint == ?O or       # "odd" keyword
+      codepoint == ?e or codepoint == ?E or       # "even" keyword  
+      is_whitespace(codepoint)                    # Leading CSS whitespace allowed
+    )
+
+  @doc """
+  Guard: Checks if a codepoint is any valid character that can appear in a CSS selector.
+  This includes all characters that can appear in any part of a selector:
+  - Identifier characters (letters, digits, underscore, hyphen, non-ASCII)
+  - Delimiter characters (#, ., :, [, ], (, ), etc.)
+  - Combinator characters (>, +, ~)
+  - Whitespace characters
+  - Attribute operators (=, ~, |, ^, $, *)
+  - Quote characters (", ')
+  - Escape character (\)
+  - Universal selector (*)
+  - Comma (selector separator)
+  - Pipe (namespace separator)
+  """
+  defguard is_selector_char(codepoint) when
+    is_integer(codepoint) and
+    (
+      # Identifier characters (covers element names, classes, IDs, attributes, pseudo-classes)
+      is_identifier_char(codepoint) or
+      
+      # Delimiter characters
+      codepoint in @delimiter_chars or
+      
+      # Combinator characters
+      codepoint in @combinator_chars or
+      
+      # Whitespace characters
+      codepoint in @whitespace_chars or
+      
+      # Attribute operators
+      codepoint in @attribute_operators or
+      
+      # Special selector characters
+      codepoint == ?| or      # Namespace separator (also in column combinator ||)
+      codepoint == ?* or      # Universal selector
+      codepoint == ?, or      # Selector list separator
+      codepoint == ?! or      # For :not() and other negations
+      codepoint == ?n or      # For nth-child formulas (already covered by identifier_char)
+      codepoint == ?+ or      # For nth-child formulas and adjacent sibling
+      
+      # Characters that can appear in strings and attribute values
+      is_utf8_letter(codepoint) or
+      is_utf8_digit(codepoint) or
+      is_non_ascii(codepoint) or
+      
+      # Common punctuation that might appear in attribute values or strings
+      codepoint == ?/ or      # URLs, paths
+      codepoint == ?. or      # Decimal points, URLs
+      codepoint == ?? or      # Query strings
+      codepoint == ?& or      # URLs
+      codepoint == ?% or      # Encoded characters
+      codepoint == ?@ or      # Emails, at-rules context
+      codepoint == ?; or      # Might appear in data attributes
+      codepoint == ?{ or      # Might appear in data attributes
+      codepoint == ?} or      # Might appear in data attributes
+      codepoint == ?< or      # Might appear in data attributes
+      codepoint == ?> or      # Also a combinator
+      codepoint == ?` or      # Template literals in data attributes
+      codepoint == ?~ or      # Also general sibling combinator
+      
+      # Escape sequences and special characters
+      codepoint == ?\\ or     # Escape character
+      
+      # Any other valid UTF-8 character that's not a control character
+      (codepoint >= 0x0021 and codepoint <= 0x007E) or  # Printable ASCII
+      (codepoint >= 0x00A0 and is_valid_utf8_codepoint(codepoint))  # Non-ASCII Unicode
+    )
 
 end

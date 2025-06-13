@@ -123,7 +123,31 @@ defmodule Selector.Parser.GuardsTest do
     end
   end
 
-  describe "is_combinator/1" do
+  describe "is_combinator_char/1" do
+    test "recognizes single-character combinator characters" do
+      assert is_combinator_char(0x003E)  # > (child combinator)
+      assert is_combinator_char(0x002B)  # + (adjacent sibling combinator)
+      assert is_combinator_char(0x007E)  # ~ (general sibling combinator)
+    end
+
+    test "rejects non-combinator characters" do
+      refute is_combinator_char(?a)
+      refute is_combinator_char(?1)
+      refute is_combinator_char(0x0020)  # Space (descendant combinator handled separately)
+      refute is_combinator_char(?|)      # Pipe (column combinator needs two ||)
+    end
+
+    test "rejects other special characters" do
+      refute is_combinator_char(?.)
+      refute is_combinator_char(?#)
+      refute is_combinator_char(?:)
+      refute is_combinator_char(?[)
+      refute is_combinator_char(?])
+      refute is_combinator_char(?=)
+    end
+  end
+
+  describe "is_combinator/1 (backward compatibility)" do
     test "recognizes combinator characters" do
       assert is_combinator(0x003E)  # >
       assert is_combinator(0x002B)  # +
@@ -186,13 +210,13 @@ defmodule Selector.Parser.GuardsTest do
       assert is_hex_digit(?F)
     end
 
-    test "recognizes fullwidth hexadecimal digits" do
-      assert is_hex_digit(0xFF10)  # Fullwidth 0
-      assert is_hex_digit(0xFF19)  # Fullwidth 9
-      assert is_hex_digit(0xFF21)  # Fullwidth A
-      assert is_hex_digit(0xFF26)  # Fullwidth F
-      assert is_hex_digit(0xFF41)  # Fullwidth a
-      assert is_hex_digit(0xFF46)  # Fullwidth f
+    test "rejects fullwidth hexadecimal digits" do
+      refute is_hex_digit(0xFF10)  # Fullwidth 0
+      refute is_hex_digit(0xFF19)  # Fullwidth 9
+      refute is_hex_digit(0xFF21)  # Fullwidth A
+      refute is_hex_digit(0xFF26)  # Fullwidth F
+      refute is_hex_digit(0xFF41)  # Fullwidth a
+      refute is_hex_digit(0xFF46)  # Fullwidth f
     end
 
     test "rejects non-hex characters" do
@@ -396,9 +420,10 @@ defmodule Selector.Parser.GuardsTest do
       assert is_comment_char(0x0391)  # Α (Greek)
     end
 
-    test "rejects comment-related characters" do
-      refute is_comment_char(0x002A)  # *
-      refute is_comment_char(0x002F)  # /
+    test "accepts all characters (sequence detection happens at parser level)" do
+      assert is_comment_char(0x002A)  # * (valid individually)
+      assert is_comment_char(0x002F)  # / (valid individually)
+      # Note: The parser must handle */ sequence detection
     end
   end
 
@@ -499,8 +524,13 @@ defmodule Selector.Parser.GuardsTest do
       assert is_selector_start_char(?.)  # .class
       assert is_selector_start_char(?#)  # #id
       assert is_selector_start_char(?[)  # [attr]
-      assert is_selector_start_char(?:)  # :pseudo
-      assert is_selector_start_char(?*)  # *
+      assert is_selector_start_char(?:)  # :pseudo (including :is(), :not(), etc.)
+      assert is_selector_start_char(?*)  # * (universal selector)
+    end
+
+    test "accepts colon for pseudo-class selectors" do
+      # This is a specific test to ensure : works for selectors like :is(div)
+      assert is_selector_start_char(?:)
     end
 
     test "accepts whitespace" do
@@ -610,9 +640,12 @@ defmodule Selector.Parser.GuardsTest do
       assert is_pseudo_start_char(?Z)
     end
 
-    test "accepts underscore and hyphen as first character" do
+    test "accepts underscore as first character" do
       assert is_pseudo_start_char(?_)
-      assert is_pseudo_start_char(?-)
+    end
+
+    test "accepts hyphen as first character (for vendor prefixes)" do
+      assert is_pseudo_start_char(?-)  # -webkit-scrollbar, -moz-placeholder, etc.
     end
 
     test "accepts non-ASCII characters as first character" do
@@ -649,14 +682,14 @@ defmodule Selector.Parser.GuardsTest do
       assert is_pseudo_char(?9)
     end
 
-    test "accepts parentheses for functional pseudo-classes" do
-      assert is_pseudo_char(?()
-      assert is_pseudo_char(?))
+    test "rejects parentheses (not part of pseudo-class name)" do
+      refute is_pseudo_char(?()
+      refute is_pseudo_char(?))
     end
 
-    test "accepts whitespace for arguments" do
-      assert is_pseudo_char(?\s)
-      assert is_pseudo_char(0x0009)  # Tab
+    test "rejects whitespace (not part of pseudo-class name)" do
+      refute is_pseudo_char(?\s)
+      refute is_pseudo_char(0x0009)  # Tab
     end
 
     test "rejects invalid characters" do
@@ -667,6 +700,7 @@ defmodule Selector.Parser.GuardsTest do
       refute is_pseudo_char(?})
       refute is_pseudo_char(?=)
       refute is_pseudo_char(?~)
+      refute is_pseudo_char(?+)  # Plus sign not part of name
     end
   end
 
@@ -689,12 +723,12 @@ defmodule Selector.Parser.GuardsTest do
       assert is_pseudo_char(?i)
       assert is_pseudo_char(?l)
       assert is_pseudo_char(?d)
-      assert is_pseudo_char(?()
-      assert is_pseudo_char(?2)
-      assert is_pseudo_char(?n)
-      assert is_pseudo_char(?+)
-      assert is_pseudo_char(?1)
-      assert is_pseudo_char(?))
+      # Note: The parentheses and content are NOT part of the pseudo-class name
+      # They would be parsed separately as functional notation
+      refute is_pseudo_char(?()
+      # The following would be parsed as part of the argument, not the name
+      refute is_pseudo_char(?+)
+      refute is_pseudo_char(?))
     end
 
     test ":lang(fr) example" do
@@ -702,10 +736,446 @@ defmodule Selector.Parser.GuardsTest do
       assert is_pseudo_char(?a)
       assert is_pseudo_char(?n)
       assert is_pseudo_char(?g)
-      assert is_pseudo_char(?()
-      assert is_pseudo_char(?f)
-      assert is_pseudo_char(?r)
-      assert is_pseudo_char(?))
+      # Parentheses are not part of the pseudo-class name
+      refute is_pseudo_char(?()
+      refute is_pseudo_char(?))
+    end
+  end
+
+  describe "is_lang_char/1" do
+    test "accepts ASCII letters" do
+      assert is_lang_char(?a)
+      assert is_lang_char(?z)
+      assert is_lang_char(?A)
+      assert is_lang_char(?Z)
+    end
+
+    test "accepts ASCII digits" do
+      assert is_lang_char(?0)
+      assert is_lang_char(?9)
+    end
+
+    test "accepts hyphen as separator" do
+      assert is_lang_char(?-)
+    end
+
+    test "rejects non-ASCII letters" do
+      refute is_lang_char(0x00E9)  # é
+      refute is_lang_char(0x4E2D)  # 中
+      refute is_lang_char(0x0391)  # Α (Greek)
+    end
+
+    test "rejects non-ASCII digits" do
+      refute is_lang_char(0x0660)  # Arabic-Indic digit
+      refute is_lang_char(0xFF10)  # Fullwidth digit
+    end
+
+    test "rejects other characters" do
+      refute is_lang_char(?_)
+      refute is_lang_char(?.)
+      refute is_lang_char(?@)
+      refute is_lang_char(?!)
+      refute is_lang_char(?\s)
+    end
+  end
+
+  describe "is_lang_start_char/1" do
+    test "accepts ASCII letters" do
+      assert is_lang_start_char(?a)
+      assert is_lang_start_char(?z)
+      assert is_lang_start_char(?A)
+      assert is_lang_start_char(?Z)
+    end
+
+    test "rejects digits" do
+      refute is_lang_start_char(?0)
+      refute is_lang_start_char(?9)
+    end
+
+    test "rejects hyphen" do
+      refute is_lang_start_char(?-)
+    end
+
+    test "rejects non-ASCII characters" do
+      refute is_lang_start_char(0x00E9)  # é
+      refute is_lang_start_char(0x4E2D)  # 中
+    end
+  end
+
+  describe "language tag examples" do
+    test "simple language codes" do
+      # "en"
+      assert is_lang_start_char(?e)
+      assert is_lang_char(?n)
+      
+      # "fr"
+      assert is_lang_start_char(?f)
+      assert is_lang_char(?r)
+    end
+
+    test "language with region codes" do
+      # "en-US"
+      assert is_lang_start_char(?e)
+      assert is_lang_char(?n)
+      assert is_lang_char(?-)
+      assert is_lang_char(?U)
+      assert is_lang_char(?S)
+      
+      # "pt-BR"
+      assert is_lang_start_char(?p)
+      assert is_lang_char(?t)
+      assert is_lang_char(?-)
+      assert is_lang_char(?B)
+      assert is_lang_char(?R)
+    end
+
+    test "complex language tags" do
+      # "zh-Hans-CN" (Chinese, Simplified script, China)
+      for char <- String.to_charlist("zh-Hans-CN") do
+        assert is_lang_char(char)
+      end
+      
+      # "en-GB-oed" (English, Great Britain, Oxford English Dictionary spelling)
+      for char <- String.to_charlist("en-GB-oed") do
+        assert is_lang_char(char)
+      end
+    end
+  end
+
+  describe "is_selector_char/1" do
+    test "accepts all identifier characters" do
+      assert is_selector_char(?a)
+      assert is_selector_char(?Z)
+      assert is_selector_char(?0)
+      assert is_selector_char(?9)
+      assert is_selector_char(?_)
+      assert is_selector_char(?-)
+      assert is_selector_char(0x4E2D)  # 中 (Chinese)
+      assert is_selector_char(0x0391)  # Α (Greek)
+    end
+
+    test "accepts all delimiter characters" do
+      assert is_selector_char(?#)  # ID selector
+      assert is_selector_char(?.)  # Class selector
+      assert is_selector_char(?:)  # Pseudo-class/element
+      assert is_selector_char(?[)  # Attribute start
+      assert is_selector_char(?])  # Attribute end
+      assert is_selector_char(?()  # Function start
+      assert is_selector_char(?))  # Function end
+      assert is_selector_char(?,)  # Selector separator
+      assert is_selector_char(?")  # String delimiter
+      assert is_selector_char(?')  # String delimiter
+      assert is_selector_char(?\\) # Escape character
+    end
+
+    test "accepts all combinator characters" do
+      assert is_selector_char(?>)  # Child combinator
+      assert is_selector_char(?+)  # Adjacent sibling
+      assert is_selector_char(?~)  # General sibling
+    end
+
+    test "accepts whitespace characters" do
+      assert is_selector_char(0x0009)  # Tab
+      assert is_selector_char(0x000A)  # Line Feed
+      assert is_selector_char(0x000C)  # Form Feed
+      assert is_selector_char(0x000D)  # Carriage Return
+      assert is_selector_char(0x0020)  # Space
+    end
+
+    test "accepts attribute operator characters" do
+      assert is_selector_char(?=)  # Equal
+      assert is_selector_char(?~)  # Includes (~=)
+      assert is_selector_char(?|)  # Dash match (|=)
+      assert is_selector_char(?^)  # Prefix (^=)
+      assert is_selector_char(?$)  # Suffix ($=)
+      assert is_selector_char(?*)  # Substring (*=)
+    end
+
+    test "accepts special selector characters" do
+      assert is_selector_char(?*)  # Universal selector
+      assert is_selector_char(?|)  # Namespace separator
+      assert is_selector_char(?!)  # For :not()
+    end
+
+    test "accepts common punctuation for attribute values and strings" do
+      assert is_selector_char(?/)
+      assert is_selector_char(??)
+      assert is_selector_char(?&)
+      assert is_selector_char(?%)
+      assert is_selector_char(?@)
+      assert is_selector_char(?;)
+      assert is_selector_char(?{)
+      assert is_selector_char(?})
+      assert is_selector_char(?<)
+      assert is_selector_char(?>)
+      assert is_selector_char(?`)
+    end
+
+    test "accepts UTF-8 characters from various scripts" do
+      assert is_selector_char(0x00E9)  # é (Latin-1 Supplement)
+      assert is_selector_char(0x0410)  # А (Cyrillic)
+      assert is_selector_char(0x05D0)  # א (Hebrew)
+      assert is_selector_char(0x0627)  # ا (Arabic)
+      assert is_selector_char(0x3042)  # あ (Hiragana)
+      assert is_selector_char(0x30A2)  # ア (Katakana)
+      assert is_selector_char(0xAC00)  # 가 (Hangul)
+      assert is_selector_char(0x0660)  # ٠ (Arabic-Indic digit)
+      assert is_selector_char(0xFF10)  # ０ (Fullwidth digit)
+    end
+
+    test "accepts printable ASCII characters" do
+      for codepoint <- 0x0021..0x007E do
+        assert is_selector_char(codepoint), "Failed for codepoint #{codepoint} (#{<<codepoint::utf8>>})"
+      end
+    end
+
+    test "rejects null character" do
+      refute is_selector_char(0x0000)
+    end
+
+    test "rejects control characters below space (except whitespace)" do
+      refute is_selector_char(0x0001)
+      refute is_selector_char(0x0002)
+      refute is_selector_char(0x0007)  # Bell
+      refute is_selector_char(0x0008)  # Backspace
+      refute is_selector_char(0x000B)  # Vertical Tab (not CSS whitespace)
+      refute is_selector_char(0x000E)
+      refute is_selector_char(0x000F)
+      refute is_selector_char(0x001F)
+    end
+
+    test "rejects DEL character" do
+      refute is_selector_char(0x007F)
+    end
+
+    test "rejects surrogate codepoints" do
+      refute is_selector_char(0xD800)
+      refute is_selector_char(0xDBFF)
+      refute is_selector_char(0xDC00)
+      refute is_selector_char(0xDFFF)
+    end
+
+    test "accepts non-breaking space and other Unicode spaces" do
+      assert is_selector_char(0x00A0)  # Non-breaking space
+      assert is_selector_char(0x2000)  # En quad
+      assert is_selector_char(0x3000)  # Ideographic space
+    end
+
+    test "is_nth_formula_char/1 accepts ASCII digits" do
+      assert is_nth_formula_char(?0)
+      assert is_nth_formula_char(?5)
+      assert is_nth_formula_char(?9)
+    end
+
+    test "is_nth_formula_char/1 accepts variable n (case-insensitive)" do
+      assert is_nth_formula_char(?n)
+      assert is_nth_formula_char(?N)
+    end
+
+    test "is_nth_formula_char/1 accepts letters for odd/even keywords (case-insensitive)" do
+      assert is_nth_formula_char(?o)  # odd
+      assert is_nth_formula_char(?O)
+      assert is_nth_formula_char(?d)  # odd  
+      assert is_nth_formula_char(?D)
+      assert is_nth_formula_char(?e)  # even
+      assert is_nth_formula_char(?E)
+      assert is_nth_formula_char(?v)  # even
+      assert is_nth_formula_char(?V)
+    end
+
+    test "is_nth_formula_char/1 accepts operators and signs" do
+      assert is_nth_formula_char(?+)
+      assert is_nth_formula_char(?-)
+    end
+
+    test "is_nth_formula_char/1 accepts CSS whitespace" do
+      assert is_nth_formula_char(0x0020)  # Space
+      assert is_nth_formula_char(0x0009)  # Tab
+      assert is_nth_formula_char(0x000A)  # Line Feed
+      assert is_nth_formula_char(0x000C)  # Form Feed
+      assert is_nth_formula_char(0x000D)  # Carriage Return
+    end
+
+    test "is_nth_formula_char/1 rejects other letters" do
+      refute is_nth_formula_char(?a)
+      refute is_nth_formula_char(?z)
+      refute is_nth_formula_char(?A)
+      refute is_nth_formula_char(?Z)
+      refute is_nth_formula_char(?m)
+      refute is_nth_formula_char(?x)
+    end
+
+    test "is_nth_formula_char/1 rejects special characters not in nth-formulas" do
+      refute is_nth_formula_char(?.)
+      refute is_nth_formula_char(?#)
+      refute is_nth_formula_char(?*)
+      refute is_nth_formula_char(?/)
+      refute is_nth_formula_char(?=)
+      refute is_nth_formula_char(?!)
+      refute is_nth_formula_char(?()
+      refute is_nth_formula_char(?))
+    end
+
+    test "is_nth_formula_char/1 rejects non-ASCII digits" do
+      refute is_nth_formula_char(0x0660)  # Arabic-Indic digit
+      refute is_nth_formula_char(0xFF10)  # Fullwidth digit
+    end
+
+    test "is_nth_formula_char/1 rejects Unicode letters" do
+      refute is_nth_formula_char(0x00E9)  # é
+      refute is_nth_formula_char(0x4E2D)  # 中
+    end
+
+    test "is_nth_formula_starting_char/1 accepts ASCII digits as starting characters" do
+      assert is_nth_formula_starting_char(?0)
+      assert is_nth_formula_starting_char(?1)
+      assert is_nth_formula_starting_char(?9)
+    end
+
+    test "is_nth_formula_starting_char/1 accepts signs as starting characters" do
+      assert is_nth_formula_starting_char(?+)  # +2n+1, +n
+      assert is_nth_formula_starting_char(?-)  # -n+3, -2n
+    end
+
+    test "is_nth_formula_starting_char/1 accepts variable n as starting character (case-insensitive)" do
+      assert is_nth_formula_starting_char(?n)  # n+1, n
+      assert is_nth_formula_starting_char(?N)
+    end
+
+    test "is_nth_formula_starting_char/1 accepts keyword starting letters (case-insensitive)" do
+      assert is_nth_formula_starting_char(?o)  # odd
+      assert is_nth_formula_starting_char(?O)
+      assert is_nth_formula_starting_char(?e)  # even
+      assert is_nth_formula_starting_char(?E)
+    end
+
+    test "is_nth_formula_starting_char/1 accepts leading CSS whitespace" do
+      assert is_nth_formula_starting_char(0x0020)  # Space
+      assert is_nth_formula_starting_char(0x0009)  # Tab
+      assert is_nth_formula_starting_char(0x000A)  # Line Feed
+      assert is_nth_formula_starting_char(0x000C)  # Form Feed
+      assert is_nth_formula_starting_char(0x000D)  # Carriage Return
+    end
+
+    test "is_nth_formula_starting_char/1 rejects letters that cannot start nth-formulas" do
+      refute is_nth_formula_starting_char(?d)  # 'd' can appear in "odd" but not start
+      refute is_nth_formula_starting_char(?v)  # 'v' can appear in "even" but not start
+      refute is_nth_formula_starting_char(?a)
+      refute is_nth_formula_starting_char(?z)
+      refute is_nth_formula_starting_char(?m)
+    end
+
+    test "is_nth_formula_starting_char/1 rejects special characters" do
+      refute is_nth_formula_starting_char(?.)
+      refute is_nth_formula_starting_char(?#)
+      refute is_nth_formula_starting_char(?*)
+      refute is_nth_formula_starting_char(?()
+      refute is_nth_formula_starting_char(?))
+      refute is_nth_formula_starting_char(?=)
+    end
+
+    test "is_nth_formula_starting_char/1 rejects non-ASCII digits" do
+      refute is_nth_formula_starting_char(0x0660)  # Arabic-Indic digit
+      refute is_nth_formula_starting_char(0xFF10)  # Fullwidth digit  
+    end
+
+    test "nth-formula validates simple integer formulas" do
+      # "5"
+      assert is_nth_formula_starting_char(?5)
+      
+      # "0"  
+      assert is_nth_formula_starting_char(?0)
+    end
+
+    test "nth-formula validates keyword formulas" do
+      # "odd"
+      assert is_nth_formula_starting_char(?o)
+      assert is_nth_formula_char(?d)
+      assert is_nth_formula_char(?d)
+      
+      # "even"
+      assert is_nth_formula_starting_char(?e)
+      assert is_nth_formula_char(?v)
+      assert is_nth_formula_char(?e)
+      assert is_nth_formula_char(?n)
+    end
+
+    test "nth-formula validates An+B formulas" do
+      # "2n+1"
+      assert is_nth_formula_starting_char(?2)
+      assert is_nth_formula_char(?n)
+      assert is_nth_formula_char(?+)
+      assert is_nth_formula_char(?1)
+      
+      # "-n+3"
+      assert is_nth_formula_starting_char(?-)
+      assert is_nth_formula_char(?n)
+      assert is_nth_formula_char(?+)
+      assert is_nth_formula_char(?3)
+      
+      # "3n-2"
+      assert is_nth_formula_starting_char(?3)
+      assert is_nth_formula_char(?n)
+      assert is_nth_formula_char(?-)
+      assert is_nth_formula_char(?2)
+    end
+
+    test "nth-formula validates formulas with whitespace" do
+      # " 2n + 1 " (with spaces)
+      assert is_nth_formula_starting_char(0x0020)  # Leading space
+      assert is_nth_formula_char(?2)
+      assert is_nth_formula_char(?n)
+      assert is_nth_formula_char(0x0020)  # Space before +
+      assert is_nth_formula_char(?+)
+      assert is_nth_formula_char(0x0020)  # Space after +
+      assert is_nth_formula_char(?1)
+      assert is_nth_formula_char(0x0020)  # Trailing space
+    end
+
+    test "nth-formula validates n-only formulas" do
+      # "n"
+      assert is_nth_formula_starting_char(?n)
+      
+      # "+n"
+      assert is_nth_formula_starting_char(?+)
+      assert is_nth_formula_char(?n)
+      
+      # "-n"
+      assert is_nth_formula_starting_char(?-)
+      assert is_nth_formula_char(?n)
+    end
+
+    test "nth-formula validates coefficient-only formulas" do
+      # "2n"
+      assert is_nth_formula_starting_char(?2)
+      assert is_nth_formula_char(?n)
+      
+      # "-3n"
+      assert is_nth_formula_starting_char(?-)
+      assert is_nth_formula_char(?3)
+      assert is_nth_formula_char(?n)
+    end
+
+    test "comprehensive selector examples" do
+      # Simple selector: div.class#id
+      for char <- String.to_charlist("div.class#id") do
+        assert is_selector_char(char)
+      end
+
+      # Complex selector: [data-value~="test"]:nth-child(2n+1)
+      for char <- String.to_charlist("[data-value~=\"test\"]:nth-child(2n+1)") do
+        assert is_selector_char(char)
+      end
+
+      # International selector: .クラス#标识符[атрибут="القيمة"]
+      for char <- String.to_charlist(".クラス#标识符[атрибут=\"القيمة\"]") do
+        assert is_selector_char(char)
+      end
+
+      # Namespace and combinators: ns|element > .class + #id ~ [attr]
+      for char <- String.to_charlist("ns|element > .class + #id ~ [attr]") do
+        assert is_selector_char(char)
+      end
     end
   end
 end

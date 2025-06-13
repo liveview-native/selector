@@ -11,12 +11,8 @@ defmodule Selector.Parser.TagName do
     parse(selectors, [tag_name, char], opts)
   end
 
-  def parse(<<"\\|"::utf8, selectors::binary>>, tag_name, opts) do
-    parse(selectors, [tag_name, ?|], opts)
-  end
-
-  def parse(<<"|"::utf8, selectors::binary>>, namespace, opts) do
-    parse(selectors, [], Keyword.put(opts, :namespace, List.to_string(namespace)))
+  def parse(<<"|"::utf8, char::utf8, selectors::binary>>, namespace, opts) when char != ?| do
+    parse(List.to_string([char, selectors]), [], Keyword.put(opts, :namespace, List.to_string(namespace)))
   end
 
   def parse(<<"\\*"::utf8, selectors::binary>>, [], opts) do
@@ -35,8 +31,8 @@ defmodule Selector.Parser.TagName do
     parse(selectors, [tag_name, char], opts)
   end
 
-  def parse(selectors, buffer, opts) do
-    {List.to_string(buffer), selectors, extract_opts(opts)}
+  def parse(selectors, tag_name, opts) do
+    {List.to_string(tag_name), selectors, extract_opts(opts)}
   end
 
   defp extract_opts(opts) do
