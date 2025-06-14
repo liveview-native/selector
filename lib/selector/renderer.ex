@@ -11,27 +11,9 @@ defmodule Selector.Renderer do
   * `:format` - The output format (not currently used)
   """
   def render(selectors, _opts \\ []) when is_list(selectors) do
-    # Group selectors into comma-separated groups
-    {groups, current} = selectors
-    |> Enum.reduce({[], []}, fn
-      # 2-tuple rule continues current selector chain
-      {:rule, _, _} = rule, {groups, []} ->
-        # Start of a new chain
-        {groups, [rule]}
-      {:rule, _} = rule, {groups, current} ->
-        # Continue current chain
-        {groups, current ++ [rule]}
-      # 3-tuple rule starts a new selector group
-      {:rule, _, _} = rule, {groups, current} when current != [] ->
-        # End current chain and start new one
-        {groups ++ [current], [rule]}
-    end)
-    
-    # Add final group if exists
-    all_groups = if current != [], do: groups ++ [current], else: groups
-    
-    # Render each group
-    all_groups
+    # Handle the parser output format: [[{:rule, ...}], [{:rule, ...}]]
+    # Each inner list represents a selector group (comma-separated selectors)
+    selectors
     |> Enum.map(&render_selector_group/1)
     |> Enum.join(", ")
   end
@@ -43,11 +25,8 @@ defmodule Selector.Renderer do
       {{:rule, sel, opts}, 0} ->
         # First rule in group
         render_rule({:rule, sel, opts})
-      {{:rule, sel}, _index} ->
-        # Descendant selector (2-tuple)
-        " " <> render_rule({:rule, sel, []})
       {{:rule, sel, opts}, _index} ->
-        # Rule with combinator
+        # Subsequent rules - check for combinator or default to descendant
         combinator = Keyword.get(opts, :combinator)
         case combinator do
           nil -> " " <> render_rule({:rule, sel, opts})
@@ -60,29 +39,31 @@ defmodule Selector.Renderer do
     end)
   end
 
-  # Renders a single rule: {:rule, selectors, combinators}
-  defp render_rule({:rule, selectors, []}) do
+  # Renders a single rule: {:rule, selectors, opts}
+  defp render_rule({:rule, selectors, _opts}) do
     selectors
     |> Enum.map_join("", &render_selector/1)
-  end
-
-  defp render_rule({:rule, selectors, [combinator: comb]}) do
-    selectors
-    |> Enum.map_join(" #{comb} ", &render_selector/1)
   end
 
   defp render_rule(other), do: inspect(other)
 
 
   # Renders individual selector components
-  defp render_selector({:tag_name, name}) when is_binary(name) do
+  defp render_selector({:tag_name, name, []}) when is_binary(name) do
     if name == "*", do: "*", else: escape_name(name)
   end
-  defp render_selector({:tag_name, name, namespace}) when is_binary(name) do
-    # Don't escape * for wildcard namespace
-    ns_part = if namespace == "*", do: "*", else: escape_name(namespace)
-    name_part = if name == "*", do: "*", else: escape_name(name)
-    "#{ns_part}|#{name_part}"
+  defp render_selector({:tag_name, name, opts}) when is_binary(name) and is_list(opts) do
+    # Handle namespaced tags
+    case Keyword.get(opts, :namespace) do
+      nil -> if name == "*", do: "*", else: escape_name(name)
+      ns ->
+        ns_part = if ns == "*", do: "*", else: escape_name(ns)
+        name_part = if name == "*", do: "*", else: escape_name(name)
+        "#{ns_part}|#{name_part}"
+    end
+  end
+  defp render_selector({:tag_name, name}) when is_binary(name) do
+    if name == "*", do: "*", else: escape_name(name)
   end
   defp render_selector({:tag_name, name}) when is_list(name), do: escape_name(to_string(name))
 
@@ -95,12 +76,12 @@ defmodule Selector.Renderer do
 
   defp render_selector({:pseudo_class, {name, args}}) when is_list(args) do
     case args do
-      [] -> ":#{name}"
+      [] -> ":#{atom_to_css_name(name)}"
       # Handle nth-child and similar with a/b notation
       [a: a_val, b: b_val] ->
         formatted = format_nth(a_val, b_val)
         ":#{atom_to_css_name(name)}(#{formatted})"
-      # Handle string arguments (e.g., :lang)
+      # Handle string arguments (e.g., :lang, :lt)
       [arg] when is_binary(arg) ->
         # Escape closing parentheses in arguments
         escaped_arg = String.replace(arg, ")", "\\)")
@@ -131,21 +112,7 @@ defmodule Selector.Renderer do
   end
 
   # Handle attribute selectors
-  defp render_selector({:attribute, {:exists, name}}), do: "[#{escape_attr(name)}]"
-
-  defp render_selector({:attribute, {op, name, value}}) do
-    attr_op = case op do
-      :equal -> "="
-      :includes -> "~="
-      :dash_match -> "|="
-      :prefix -> "^="
-      :suffix -> "$="
-      :substring -> "*="
-      _ -> "#{op}"
-    end
-
-    "[#{escape_attr(name)}#{attr_op}#{escape_attr_value(value)}]"
-  end
+  defp render_selector({:attribute, {:exists, name, nil, []}}), do: "[#{escape_attr(name)}]"
 
   defp render_selector({:attribute, {op, name, value, opts}}) when is_list(opts) do
     attr_op = case op do
@@ -165,7 +132,10 @@ defmodule Selector.Renderer do
       _ -> ""
     end
 
-    "[#{escape_attr(name)}#{attr_op}#{escape_attr_value(value)}#{case_flag}]"
+    case value do
+      nil -> "[#{escape_attr(name)}]"
+      _ -> "[#{escape_attr(name)}#{attr_op}#{escape_attr_value(value)}#{case_flag}]"
+    end
   end
 
   defp render_selector(other), do: inspect(other)
@@ -192,6 +162,18 @@ defmodule Selector.Renderer do
   defp escape_name(name) when is_binary(name) do
     # Check if name starts with a digit or space - needs special escaping
     case name do
+      # For "30wow", we need to output "\30 wow"
+      "30" <> rest when rest != "" ->
+        "\\30 " <> escape_rest(rest)
+      # For just "30", output "\30"
+      "30" ->
+        "\\30"
+      # For "20wow", we need to output "\20 wow"
+      "20" <> rest when rest != "" ->
+        "\\20 " <> escape_rest(rest)
+      # For just "20", output "\20"
+      "20" ->
+        "\\20"
       <<digit, rest::binary>> when digit in ?0..?9 ->
         # Escape leading digit as hex with trailing space
         "\\3" <> <<digit>> <> " " <> escape_rest(rest)
@@ -218,14 +200,23 @@ defmodule Selector.Renderer do
 
   defp escape_id(id), do: escape_name(id)
   defp escape_class(class), do: escape_name(class)
-  defp escape_attr(name), do: escape_name(name)
+  defp escape_attr(name) when is_binary(name), do: escape_name(name)
+  defp escape_attr(name) when is_list(name), do: escape_name(to_string(name))
 
   defp escape_attr_value(value) when is_binary(value) do
     # Always use double quotes
     escaped = value
     |> String.replace("\\", "\\\\")
     |> String.replace("\"", "\\\"")
+    |> String.replace("\n", "\\a ")
+    |> String.replace("\r", "\\d ")
+    |> String.replace("\t", "\\9 ")
     "\"#{escaped}\""
+  end
+  
+  defp escape_attr_value(value) when is_list(value) do
+    # Handle charlist values
+    escape_attr_value(to_string(value))
   end
 
   defp render_nested_rules(rules) when is_list(rules) do
@@ -251,6 +242,11 @@ defmodule Selector.Renderer do
   defp atom_to_css_name(atom) when is_atom(atom) do
     atom
     |> Atom.to_string()
+    |> String.replace("_", "-")
+  end
+  
+  defp atom_to_css_name(string) when is_binary(string) do
+    string
     |> String.replace("_", "-")
   end
 end

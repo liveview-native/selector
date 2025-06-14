@@ -7,7 +7,7 @@ A CSS selector parser library for Elixir. Parses CSS selector strings into an Ab
 - **CSS Selectors Level 1** - Complete support
 - **CSS Selectors Level 2** - Complete support
 - **CSS Selectors Level 3** - Complete support
-- **CSS Selectors Level 4** - Partial support for stable features
+- **CSS Selectors Level 4** - Extensive support for stable features
 
 ## CSS Compatibility
 
@@ -15,96 +15,98 @@ A CSS selector parser library for Elixir. Parses CSS selector strings into an Ab
 
 | Feature | Status | Example |
 |---------|--------|---------|
-| Type selectors | ✓ | `h1`, `p`, `div` |
-| Class selectors | ✓ | `.warning`, `.note` |
-| ID selectors | ✓ | `#header`, `#footer` |
-| Descendant combinator | ✓ | `div p`, `ul li` |
-| `:link` pseudo-class | ✓ | `a:link` |
-| `:visited` pseudo-class | ✓ | `a:visited` |
-| `:active` pseudo-class | ✓ | `a:active` |
-| `::first-line` pseudo-element | ✓ | `p::first-line` |
-| `::first-letter` pseudo-element | ✓ | `p::first-letter` |
-| Multiple selectors (grouping) | ✓ | `h1, h2, h3` |
+| Type selectors | ✅ | `h1`, `p`, `div` |
+| Class selectors | ✅ | `.warning`, `.note` |
+| ID selectors | ✅ | `#header`, `#footer` |
+| Descendant combinator | ✅ | `div p`, `ul li` |
+| `:link` pseudo-class | ✅ | `a:link` |
+| `:visited` pseudo-class | ✅ | `a:visited` |
+| `:active` pseudo-class | ✅ | `a:active` |
+| `::first-line` pseudo-element | ✅ | `p::first-line` |
+| `::first-letter` pseudo-element | ✅ | `p::first-letter` |
+| Multiple selectors (grouping) | ✅ | `h1, h2, h3` |
 
 ### CSS Selectors Level 2
 
 | Feature | Status | Example |
 |---------|--------|---------|
-| Universal selector | ✓ | `*` |
-| Attribute selectors | ✓ | `[title]`, `[class="example"]` |
-| Attribute operators | ✓ | `[class~="warning"]`, `[lang|="en"]` |
-| Child combinator | ✓ | `body > p` |
-| Adjacent sibling combinator | ✓ | `h1 + p` |
-| `:hover` pseudo-class | ✓ | `a:hover` |
-| `:focus` pseudo-class | ✓ | `input:focus` |
-| `:before` pseudo-element | ✓ | `p:before` (legacy syntax) |
-| `:after` pseudo-element | ✓ | `p:after` (legacy syntax) |
-| `:first-child` pseudo-class | ✓ | `li:first-child` |
-| `:lang()` pseudo-class | ✓ | `:lang(fr)` |
-| Multiple attribute selectors | ✓ | `input[type="text"][required]` |
-| Descendant combinator with universal | ✓ | `div *` |
+| Universal selector | ✅ | `*` |
+| Attribute selectors | ✅ | `[title]`, `[class="example"]` |
+| Attribute operators | ✅ | `[class~="warning"]`, `[lang|="en"]` |
+| Child combinator | ✅ | `body > p` |
+| Adjacent sibling combinator | ✅ | `h1 + p` |
+| `:hover` pseudo-class | ✅ | `a:hover` |
+| `:focus` pseudo-class | ✅ | `input:focus` |
+| `:before` pseudo-element | ✅ | `p:before` (legacy syntax) |
+| `:after` pseudo-element | ✅ | `p:after` (legacy syntax) |
+| `:first-child` pseudo-class | ✅ | `li:first-child` |
+| `:lang()` pseudo-class | ✅ | `:lang(fr)` |
+| Multiple attribute selectors | ✅ | `input[type="text"][required]` |
+| Descendant combinator with universal | ✅ | `div *` |
 
 ### CSS Selectors Level 3
 
 | Feature | Status | Example |
 |---------|--------|---------|
-| Namespace selectors | ✓ | `svg|rect`, `*|*` |
-| Substring matching attribute selectors | ✓ | `[href^="https"]`, `[src$=".png"]`, `[title*="hello"]` |
-| General sibling combinator | ✓ | `h1 ~ p` |
-| `:root` pseudo-class | ✓ | `:root` |
-| `:nth-child()` pseudo-class | ✓ | `:nth-child(2n+1)` |
-| `:nth-last-child()` pseudo-class | ✓ | `:nth-last-child(2)` |
-| `:nth-of-type()` pseudo-class | ✓ | `p:nth-of-type(odd)` |
-| `:nth-last-of-type()` pseudo-class | ✓ | `div:nth-last-of-type(2n)` |
-| `:last-child` pseudo-class | ✓ | `li:last-child` |
-| `:first-of-type` pseudo-class | ✓ | `p:first-of-type` |
-| `:last-of-type` pseudo-class | ✓ | `h2:last-of-type` |
-| `:only-child` pseudo-class | ✓ | `p:only-child` |
-| `:only-of-type` pseudo-class | ✓ | `img:only-of-type` |
-| `:empty` pseudo-class | ✓ | `div:empty` |
-| `:target` pseudo-class | ✓ | `:target` |
-| `:enabled` pseudo-class | ✓ | `input:enabled` |
-| `:disabled` pseudo-class | ✓ | `input:disabled` |
-| `:checked` pseudo-class | ✓ | `input:checked` |
-| `:not()` pseudo-class | ✓ | `:not(.active)` |
-| `::before` pseudo-element | ✓ | `div::before` |
-| `::after` pseudo-element | ✓ | `div::after` |
-| `::first-line` pseudo-element | ✓ | `p::first-line` |
-| `::first-letter` pseudo-element | ✓ | `p::first-letter` |
+| Namespace selectors | ✅ | `svg|rect`, `*|*` |
+| Substring matching attribute selectors | ✅ | `[href^="https"]`, `[src$=".png"]`, `[title*="hello"]` |
+| General sibling combinator | ✅ | `h1 ~ p` |
+| `:root` pseudo-class | ✅ | `:root` |
+| `:nth-child()` pseudo-class | ✅ | `:nth-child(2n+1)` |
+| `:nth-last-child()` pseudo-class | ✅ | `:nth-last-child(2)` |
+| `:nth-of-type()` pseudo-class | ✅ | `p:nth-of-type(odd)` |
+| `:nth-last-of-type()` pseudo-class | ✅ | `div:nth-last-of-type(2n)` |
+| `:last-child` pseudo-class | ✅ | `li:last-child` |
+| `:first-of-type` pseudo-class | ✅ | `p:first-of-type` |
+| `:last-of-type` pseudo-class | ✅ | `h2:last-of-type` |
+| `:only-child` pseudo-class | ✅ | `p:only-child` |
+| `:only-of-type` pseudo-class | ✅ | `img:only-of-type` |
+| `:empty` pseudo-class | ✅ | `div:empty` |
+| `:target` pseudo-class | ✅ | `:target` |
+| `:enabled` pseudo-class | ✅ | `input:enabled` |
+| `:disabled` pseudo-class | ✅ | `input:disabled` |
+| `:checked` pseudo-class | ✅ | `input:checked` |
+| `:not()` pseudo-class | ✅ | `:not(.active)` |
+| `::before` pseudo-element | ✅ | `div::before` |
+| `::after` pseudo-element | ✅ | `div::after` |
+| `::first-line` pseudo-element | ✅ | `p::first-line` |
+| `::first-letter` pseudo-element | ✅ | `p::first-letter` |
 
 ### CSS Selectors Level 4
 
 | Feature | Status | Example |
 |---------|--------|---------|
-| Case-sensitivity flag | ✓ | `[attr=value i]`, `[attr=value s]` |
-| Column combinator | ✓ | `col \|\| td` |
-| `:is()` pseudo-class | ✓ | `:is(h1, h2, h3)` |
-| `:where()` pseudo-class | ✓ | `:where(article, section) p` |
-| `:has()` pseudo-class | ✓ | `:has(> img)` |
-| `:not()` with complex selectors | ✓ | `:not(div.active)` |
-| `:focus-within` | ✓ | `:focus-within` |
-| `:focus-visible` | ✓ | `:focus-visible` |
-| `:any-link` | ✓ | `:any-link` |
-| `:read-write` pseudo-class | ✓ | `input:read-write` |
-| `:read-only` pseudo-class | ✓ | `input:read-only` |
-| `:placeholder-shown` pseudo-class | ✓ | `input:placeholder-shown` |
-| `:default` pseudo-class | ✓ | `option:default` |
-| `:valid` pseudo-class | ✓ | `input:valid` |
-| `:invalid` pseudo-class | ✓ | `input:invalid` |
-| `:in-range` pseudo-class | ✓ | `input:in-range` |
-| `:out-of-range` pseudo-class | ✓ | `input:out-of-range` |
-| `:required` pseudo-class | ✓ | `input:required` |
-| `:optional` pseudo-class | ✓ | `input:optional` |
-| `::placeholder` pseudo-element | ✓ | `input::placeholder` |
-| `::selection` pseudo-element | ✓ | `::selection` |
-| `::backdrop` pseudo-element | ✓ | `dialog::backdrop` |
-| `::marker` pseudo-element | ✓ | `li::marker` |
-| `::cue` pseudo-element | ✓ | `::cue` |
-| `::slotted()` pseudo-element | ✓ | `::slotted(span)` |
-| `:nth-child(An+B of S)` | ✗ | `:nth-child(2n of .important)` |
-| `:nth-col()` | ✗ | `:nth-col(2n+1)` |
-| `:nth-last-col()` | ✗ | `:nth-last-col(2n+1)` |
-| Attribute namespace wildcards | ✗ | `[*\|attr=value]` |
+| Case-sensitivity flag | ✅ | `[attr=value i]`, `[attr=value s]` |
+| Column combinator | ✅ | `col \|\| td` |
+| `:is()` pseudo-class | ✅ | `:is(h1, h2, h3)` |
+| `:where()` pseudo-class | ✅ | `:where(article, section) p` |
+| `:has()` pseudo-class | ✅ | `:has(> img)` |
+| `:not()` with complex selectors | ✅ | `:not(div.active)` |
+| `:matches()` pseudo-class | ✅ | `:matches(h1, h2, h3)` |
+| `:focus-within` | ✅ | `:focus-within` |
+| `:focus-visible` | ✅ | `:focus-visible` |
+| `:any-link` | ✅ | `:any-link` |
+| `:read-write` pseudo-class | ✅ | `input:read-write` |
+| `:read-only` pseudo-class | ✅ | `input:read-only` |
+| `:placeholder-shown` pseudo-class | ✅ | `input:placeholder-shown` |
+| `:default` pseudo-class | ✅ | `option:default` |
+| `:valid` pseudo-class | ✅ | `input:valid` |
+| `:invalid` pseudo-class | ✅ | `input:invalid` |
+| `:in-range` pseudo-class | ✅ | `input:in-range` |
+| `:out-of-range` pseudo-class | ✅ | `input:out-of-range` |
+| `:required` pseudo-class | ✅ | `input:required` |
+| `:optional` pseudo-class | ✅ | `input:optional` |
+| `::placeholder` pseudo-element | ✅ | `input::placeholder` |
+| `::selection` pseudo-element | ✅ | `::selection` |
+| `::backdrop` pseudo-element | ✅ | `dialog::backdrop` |
+| `::marker` pseudo-element | ✅ | `li::marker` |
+| `::cue` pseudo-element | ✅ | `::cue` |
+| `::slotted()` pseudo-element | ✅ | `::slotted(span)` |
+| Vendor-specific pseudo-elements | ✅ | `::-webkit-input-placeholder` |
+| `:nth-child(An+B of S)` | ✅ | `:nth-child(2n of .important)` |
+| `:nth-col()` | ✅ | `:nth-col(2n+1)` |
+| `:nth-last-col()` | ✅ | `:nth-last-col(2n+1)` |
+| Attribute namespace wildcards | ❌ | `[*\|attr=value]` |
   
 ## Installation
 
