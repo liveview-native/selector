@@ -113,19 +113,6 @@ defmodule Selector.Renderer do
         ":#{atom_to_css_name(name)}(#{render_nested_rules(args)})"
     end
   end
-  
-  defp format_nth(0, b), do: "#{b}"
-  defp format_nth(2, 0), do: "even"
-  defp format_nth(2, 1), do: "odd"
-  defp format_nth(a, 0) when a == 1, do: "n"
-  defp format_nth(a, 0) when a == -1, do: "-n"
-  defp format_nth(a, 0), do: "#{a}n"
-  defp format_nth(a, b) when a == 1 and b > 0, do: "n+#{b}"
-  defp format_nth(a, b) when a == 1 and b < 0, do: "n#{b}"
-  defp format_nth(a, b) when a == -1 and b > 0, do: "-n+#{b}"
-  defp format_nth(a, b) when a == -1 and b < 0, do: "-n#{b}"
-  defp format_nth(a, b) when b > 0, do: "#{a}n+#{b}"
-  defp format_nth(a, b), do: "#{a}n#{b}"
 
   # Handle pseudo-elements
 
@@ -182,6 +169,19 @@ defmodule Selector.Renderer do
   end
 
   defp render_selector(other), do: inspect(other)
+  
+  defp format_nth(0, b), do: "#{b}"
+  defp format_nth(2, 0), do: "even"
+  defp format_nth(2, 1), do: "odd"
+  defp format_nth(a, 0) when a == 1, do: "n"
+  defp format_nth(a, 0) when a == -1, do: "-n"
+  defp format_nth(a, 0), do: "#{a}n"
+  defp format_nth(a, b) when a == 1 and b > 0, do: "n+#{b}"
+  defp format_nth(a, b) when a == 1 and b < 0, do: "n#{b}"
+  defp format_nth(a, b) when a == -1 and b > 0, do: "-n+#{b}"
+  defp format_nth(a, b) when a == -1 and b < 0, do: "-n#{b}"
+  defp format_nth(a, b) when b > 0, do: "#{a}n+#{b}"
+  defp format_nth(a, b), do: "#{a}n#{b}"
 
   # Helper functions
   # Define a function to check if a character needs escaping
@@ -228,15 +228,6 @@ defmodule Selector.Renderer do
     "\"#{escaped}\""
   end
 
-  defp render_nested_rule([rule]), do: render_nested_rule(rule)
-
-  defp render_nested_rule({:rule, selectors, _}) do
-    selectors
-    |> Enum.map_join("", &render_selector/1)
-  end
-
-  defp render_nested_rule(other), do: inspect(other)
-  
   defp render_nested_rules(rules) when is_list(rules) do
     rules
     |> Enum.map(fn

@@ -29,10 +29,6 @@ defmodule Selector.Parser.Selector do
     {Enum.reverse(selector_list), ""}
   end
 
-  def parse(<<>>, [], _opts) do
-    raise ArgumentError, "Expected selector but end of input reached."
-  end
-
   def parse(<<char::utf8, _selectors::binary>> = selectors, selector_list, opts) when is_selector_start_char(char) do
     {selector, selectors} = parse_rules(selectors, [], opts)
     parse(selectors, [selector | selector_list], opts)
@@ -57,11 +53,7 @@ defmodule Selector.Parser.Selector do
 
   defp parse_rules(<<char::utf8, _selectors::binary>> = selectors, rules, opts) when is_selector_start_char(char) do
     {rule, selectors} = parse_rule(selectors, [], opts)
-    {combinator, opts} =
-      case Keyword.split(opts, [:combinator]) do
-        {nil, opts} -> {[], opts}
-        {combinator, opts} -> {combinator, opts}
-      end
+    {combinator, opts} = Keyword.split(opts, [:combinator])
 
     {new_combinator, selectors} = Combinator.parse(selectors, opts)
 

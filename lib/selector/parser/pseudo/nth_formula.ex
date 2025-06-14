@@ -59,6 +59,14 @@ defmodule Selector.Parser.Pseudo.NthFormula do
     {number, selectors}
   end
 
+  defp parse_variable(<<"\\6e"::utf8, selectors::binary>>, formula, opts) do
+    parse_operator(selectors, formula, opts)
+  end
+
+  defp parse_variable(<<"\\n"::utf8, selectors::binary>>, formula, opts) do
+    parse_operator(selectors, formula, opts)
+  end
+
   defp parse_variable(<<"n"::utf8, selectors::binary>>, formula, opts) do
     parse_operator(selectors, formula, opts)
   end

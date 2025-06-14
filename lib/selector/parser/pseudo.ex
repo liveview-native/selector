@@ -108,6 +108,7 @@ defmodule Selector.Parser.Pseudo do
     left
     link
     local-link
+    matches
     modal
     muted
     not
@@ -290,7 +291,7 @@ defmodule Selector.Parser.Pseudo do
   defp parse_name(selectors, name, _opts) do
     name = List.to_string(name)
 
-    if is_param_pseudo(name) do
+    if name != "cue" && is_param_pseudo(name) do
       raise ArgumentError, ~s(Argument is required for pseudo-class "#{name}".)
     end
 
