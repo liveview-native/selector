@@ -25,3 +25,5 @@ selector-*.tar
 /deps/libcss/build
 /deps/libcss/.git
 /priv/
+.coder
+.opencode

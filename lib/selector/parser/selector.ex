@@ -31,7 +31,7 @@ defmodule Selector.Parser.Selector do
 
   def parse(<<char::utf8, _selectors::binary>> = selectors, selector_list, opts) when is_selector_start_char(char) do
     {selector, selectors} = parse_rules(selectors, [], opts)
-    parse(selectors, [selector | selector_list], opts)
+    parse(selectors, [{:rules, selector} | selector_list], opts)
   end
 
   def parse(selectors, selector_list, _opts) do

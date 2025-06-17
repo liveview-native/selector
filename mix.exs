@@ -4,7 +4,7 @@ defmodule Selector.MixProject do
   def project do
     [
       app: :selector,
-      version: "0.1.0",
+      version: "0.0.1",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -28,6 +28,8 @@ defmodule Selector.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:ex_doc, "~> 0.38", only: :dev, runtime: false, warn_if_outdated: true},
+    ]
   end
 end

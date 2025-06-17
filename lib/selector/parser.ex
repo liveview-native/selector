@@ -9,7 +9,7 @@ defmodule Selector.Parser do
   """
   def parse(selectors, opts \\ []) when is_binary(selectors) do
     case Selector.Parser.Selector.parse(selectors, [], opts) do
-      {selector_list, ""} -> selector_list
+      {selector_list, ""} -> {:selectors, selector_list}
       {_selector_list, selectors} -> raise ArgumentError, "Cannot parse: #{selectors}"
     end
   end
