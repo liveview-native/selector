@@ -1,15 +1,15 @@
-# Selector
+# 🎯 Selector
 
 A CSS selector parser library for Elixir. Parses CSS selector strings into an Abstract Syntax Tree (AST) that can be analyzed, manipulated, and rendered back to CSS.
 
-## Features
+## ✨ Features
 
 - **CSS Selectors Level 1** - Complete support
 - **CSS Selectors Level 2** - Complete support
 - **CSS Selectors Level 3** - Complete support
 - **CSS Selectors Level 4** - Extensive support for stable features
 
-## CSS Compatibility
+## 🎨 CSS Compatibility
 
 ### CSS Selectors Level 1
 
@@ -32,7 +32,7 @@ A CSS selector parser library for Elixir. Parses CSS selector strings into an Ab
 |---------|--------|---------|
 | Universal selector | ✅ | `*` |
 | Attribute selectors | ✅ | `[title]`, `[class="example"]` |
-| Attribute operators | ✅ | `[class~="warning"]`, `[lang|="en"]` |
+| Attribute operators | ✅ | `[class~="warning"]`, `[lang\\|="en"]` |
 | Child combinator | ✅ | `body > p` |
 | Adjacent sibling combinator | ✅ | `h1 + p` |
 | `:hover` pseudo-class | ✅ | `a:hover` |
@@ -48,7 +48,7 @@ A CSS selector parser library for Elixir. Parses CSS selector strings into an Ab
 
 | Feature | Status | Example |
 |---------|--------|---------|
-| Namespace selectors | ✅ | `svg|rect`, `*|*` |
+| Namespace selectors | ✅ | `svg\\|rect`, `*\\|*` |
 | Substring matching attribute selectors | ✅ | `[href^="https"]`, `[src$=".png"]`, `[title*="hello"]` |
 | General sibling combinator | ✅ | `h1 ~ p` |
 | `:root` pseudo-class | ✅ | `:root` |
@@ -77,7 +77,7 @@ A CSS selector parser library for Elixir. Parses CSS selector strings into an Ab
 | Feature | Status | Example |
 |---------|--------|---------|
 | Case-sensitivity flag | ✅ | `[attr=value i]`, `[attr=value s]` |
-| Column combinator | ✅ | `col \|\| td` |
+| Column combinator | ✅ | `col \\|\\| td` |
 | `:is()` pseudo-class | ✅ | `:is(h1, h2, h3)` |
 | `:where()` pseudo-class | ✅ | `:where(article, section) p` |
 | `:has()` pseudo-class | ✅ | `:has(> img)` |
@@ -106,9 +106,9 @@ A CSS selector parser library for Elixir. Parses CSS selector strings into an Ab
 | `:nth-child(An+B of S)` | ✅ | `:nth-child(2n of .important)` |
 | `:nth-col()` | ✅ | `:nth-col(2n+1)` |
 | `:nth-last-col()` | ✅ | `:nth-last-col(2n+1)` |
-| Attribute namespace wildcards | ❌ | `[*\|attr=value]` |
+| Attribute namespace wildcards | ❌ | `[*\\|attr=value]` |
   
-## Installation
+## 📦 Installation
 
 Add `selector` to your list of dependencies in `mix.exs`:
 
@@ -120,9 +120,9 @@ def deps do
 end
 ```
 
-## Usage
+## 🚀 Usage
 
-### Basic Parsing
+### 📝 Basic Parsing
 
 Parse CSS selectors into an AST:
 
@@ -147,7 +147,7 @@ Selector.parse("div, .button")
 #    ]
 ```
 
-### Complex Selectors
+### 🔧 Complex Selectors
 
 ```elixir
 # Combined selectors
@@ -167,7 +167,7 @@ Selector.parse("p::first-line")
 # => [[{:rule, [{:tag_name, "p", []}, {:pseudo_element, {"first-line", []}}], []}]]
 ```
 
-### Namespaces
+### 🏷️ Namespaces
 
 Namespaces are useful when working with XML documents or SVG elements within HTML:
 
@@ -213,7 +213,7 @@ Selector.parse("math|mrow > math|mi + math|mo")
 #    ]]
 ```
 
-### Combinators
+### 🔗 Combinators
 
 ```elixir
 # Descendant combinator (space)
@@ -252,7 +252,7 @@ Selector.parse("col || td")
 #    ]]
 ```
 
-### Attribute Selectors
+### 🏷️ Attribute Selectors
 
 ```elixir
 # Existence
@@ -292,7 +292,7 @@ Selector.parse("[class=Button s]")
 # => [[{:rule, [{:attribute, {:equal, "class", "Button", case_sensitive: true}}], []}]]
 ```
 
-### Pseudo-classes
+### 🎭 Pseudo-classes
 
 ```elixir
 # Simple pseudo-classes
@@ -353,7 +353,7 @@ Selector.parse(":has(> img)")
 #      ]}}], []}]]
 ```
 
-### Pseudo-elements
+### 🎨 Pseudo-elements
 
 ```elixir
 # Standard pseudo-elements
@@ -389,7 +389,7 @@ Selector.parse("::-webkit-input-placeholder")
 # => [[{:rule, [{:pseudo_element, {"-webkit-input-placeholder", []}}], []}]]
 ```
 
-### Advanced Examples
+### 💪 Advanced Examples
 
 ```elixir
 # Complex selector with multiple features
@@ -424,7 +424,7 @@ Selector.parse(":not(:first-child):not(:last-child)")
 # ], []}]
 ```
 
-### Rendering AST back to CSS
+### 🔄 Rendering AST back to CSS
 
 ```elixir
 ast = Selector.parse("div#main > p.text")
@@ -432,7 +432,7 @@ Selector.render(ast)
 # => "div#main > p.text"
 ```
 
-### Parser Options
+### ⚙️ Parser Options
 
 ```elixir
 # Strict mode (default: true)
@@ -446,7 +446,7 @@ Selector.parse("div:hover", syntax: %{tag: true})
 # Raises ArgumentError: "Pseudo-classes are not enabled."
 ```
 
-## AST Structure
+## 🌳 AST Structure
 
 The parser generates an AST with the following structure:
 
@@ -454,7 +454,7 @@ The parser generates an AST with the following structure:
 - Multiple selectors are returned as a list of rules
 - Combinators are stored in the options of the following rule
 
-### Selector Types
+### 🎯 Selector Types
 
 - `{:tag_name, "div", []}` - Element selector
 - `{:tag_name, "div", namespace: "svg"}` - Namespaced element
@@ -464,7 +464,7 @@ The parser generates an AST with the following structure:
 - `{:pseudo_class, {name, arguments}}` - Pseudo-class
 - `{:pseudo_element, {name, arguments}}` - Pseudo-element
 
-### Attribute Operations
+### 🔧 Attribute Operations
 
 - `:exists` - `[attr]`
 - `:equal` - `[attr=value]`
@@ -474,7 +474,7 @@ The parser generates an AST with the following structure:
 - `:suffix` - `[attr$=value]`
 - `:substring` - `[attr*=value]`
 
-## Error Handling
+## ⚠️ Error Handling
 
 The parser raises `ArgumentError` for invalid selectors:
 
@@ -487,6 +487,6 @@ end
 # => "Invalid selector"
 ```
 
-## License
+## 📄 License
 
-MIT License. See LICENSE file for details.
+MIT License - Copyright (c) 2024 DockYard, Inc. See [LICENSE.md](LICENSE.md) for details.

@@ -9,7 +9,25 @@ defmodule Selector.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
-      description: "CSS Selector Parsing"
+      description: "CSS Selector Parsing",
+      
+      # Docs
+      name: "Selector",
+      source_url: "https://github.com/liveview-native/selector",
+      homepage_url: "https://github.com/liveview-native/selector",
+      docs: [
+        main: "Selector",
+        extras: ["README.md", "LICENSE.md"],
+        groups_for_modules: [
+          "Core": [Selector],
+          "Parser": [Selector.Parser],
+          "AST": [Selector.AST]
+        ],
+        groups_for_extras: [
+          "Guides": ["README.md"],
+          "Legal": ["LICENSE.md"]
+        ]
+      ]
     ]
   end
 
