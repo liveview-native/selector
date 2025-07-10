@@ -17,6 +17,7 @@ defmodule Selector.MixProject do
       homepage_url: "https://github.com/liveview-native/selector",
       docs: [
         main: "Selector",
+        logo: "assets/logo.png",
         extras: ["README.md", "LICENSE.md"],
         groups_for_modules: [
           "Core": [Selector],
