@@ -59,8 +59,9 @@ defmodule Selector do
 
   ## Returns
 
-  Returns a list of rule tuples representing the parsed selector AST. Each rule
-  has the format `{:rule, selectors, options}` where:
+  Returns a tuple `{:selectors, [selector_groups]}` representing the parsed selector AST.
+  Each selector group is `{:rules, [rules]}` and each rule has the format 
+  `{:rule, selectors, options}` where:
 
     * `selectors` is a list of selector components (tags, classes, IDs, etc.)
     * `options` is a keyword list containing combinator information
@@ -70,55 +71,55 @@ defmodule Selector do
   Basic selectors:
 
       iex> Selector.parse("div")
-      [{:rule, [{:tag_name, "div", []}], []}]
+      {:selectors, [{:rules, [{:rule, [{:tag_name, "div", []}], []}]}]}
 
       iex> Selector.parse("#header")
-      [{:rule, [{:id, "header"}], []}]
+      {:selectors, [{:rules, [{:rule, [{:id, "header"}], []}]}]}
 
       iex> Selector.parse(".button")
-      [{:rule, [{:class, "button"}], []}]
+      {:selectors, [{:rules, [{:rule, [{:class, "button"}], []}]}]}
 
   Complex selectors:
 
       iex> Selector.parse("div#main.container[data-role='navigation']")
-      [{:rule, [
+      {:selectors, [{:rules, [{:rule, [
         {:tag_name, "div", []},
         {:id, "main"},
         {:class, "container"},
         {:attribute, {:equal, "data-role", "navigation", []}}
-      ], []}]
+      ], []}]}]}
 
   Multiple selectors:
 
       iex> Selector.parse("h1, h2, h3")
-      [
-        {:rule, [{:tag_name, "h1", []}], []},
-        {:rule, [{:tag_name, "h2", []}], []},
-        {:rule, [{:tag_name, "h3", []}], []}
-      ]
+      {:selectors, [
+        {:rules, [{:rule, [{:tag_name, "h1", []}], []}]},
+        {:rules, [{:rule, [{:tag_name, "h2", []}], []}]},
+        {:rules, [{:rule, [{:tag_name, "h3", []}], []}]}
+      ]}
 
   Combinators:
 
       iex> Selector.parse("article > p")
-      [
+      {:selectors, [{:rules, [
         {:rule, [{:tag_name, "article", []}], []},
         {:rule, [{:tag_name, "p", []}], combinator: ">"}
-      ]
+      ]}]}
 
   Pseudo-classes with arguments:
 
       iex> Selector.parse(":nth-child(2n+1)")
-      [{:rule, [{:pseudo_class, {:nth_child, [a: 2, b: 1]}}], []}]
+      {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 1]]}}], []}]}]}
 
       iex> Selector.parse(":not(.active)")
-      [{:rule, [{:pseudo_class, {:not, [
-        [{:rule, [{:class, "active"}], []}]
-      ]}}], []}]
+      {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"not", [
+        [{:rules, [{:rule, [{:class, "active"}], []}]}]
+      ]}}], []}]}]}
 
   With options:
 
       iex> Selector.parse("#--custom-id", strict: false)
-      [{:rule, [{:id, "--custom-id"}], []}]
+      {:selectors, [{:rules, [{:rule, [{:id, "--custom-id"}], []}]}]}
 
   ## Error Handling
 

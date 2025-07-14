@@ -129,22 +129,22 @@ Parse CSS selectors into an AST:
 ```elixir
 # Simple tag selector
 Selector.parse("div")
-# => [[{:rule, [{:tag_name, "div", []}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "div", []}], []}]}]}
 
 # ID selector
 Selector.parse("#header")
-# => [[{:rule, [{:id, "header"}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:id, "header"}], []}]}]}
 
 # Class selector
 Selector.parse(".button")
-# => [[{:rule, [{:class, "button"}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:class, "button"}], []}]}]}
 
 # Multiple selectors
 Selector.parse("div, .button")
-# => [
-#      [{:rule, [{:tag_name, "div", []}], []}],
-#      [{:rule, [{:class, "button"}], []}]
-#    ]
+# => {:selectors, [
+#      {:rules, [{:rule, [{:tag_name, "div", []}], []}]},
+#      {:rules, [{:rule, [{:class, "button"}], []}]}
+#    ]}
 ```
 
 ### 🔧 Complex Selectors
@@ -152,19 +152,19 @@ Selector.parse("div, .button")
 ```elixir
 # Combined selectors
 Selector.parse("div#main.container")
-# => [[{:rule, [{:tag_name, "div", []}, {:id, "main"}, {:class, "container"}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "div", []}, {:id, "main"}, {:class, "container"}], []}]}]}
 
 # Attribute selectors
 Selector.parse("input[type='text']")
-# => [[{:rule, [{:tag_name, "input", []}, {:attribute, {:equal, "type", "text", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "input", []}, {:attribute, {:equal, "type", "text", []}}], []}]}]}
 
 # Pseudo-classes
 Selector.parse("a:hover")
-# => [[{:rule, [{:tag_name, "a", []}, {:pseudo_class, {"hover", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "a", []}, {:pseudo_class, {"hover", []}}], []}]}]}
 
 # Pseudo-elements
 Selector.parse("p::first-line")
-# => [[{:rule, [{:tag_name, "p", []}, {:pseudo_element, {"first-line", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "p", []}, {:pseudo_element, {"first-line", []}}], []}]}]}
 ```
 
 ### 🏷️ Namespaces
@@ -174,43 +174,43 @@ Namespaces are useful when working with XML documents or SVG elements within HTM
 ```elixir
 # Element with namespace prefix
 Selector.parse("svg|rect")
-# => [[{:rule, [{:tag_name, "rect", namespace: "svg"}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "rect", namespace: "svg"}], []}]}]}
 
 # Any namespace (wildcard)
 Selector.parse("*|circle")
-# => [[{:rule, [{:tag_name, "circle", namespace: "*"}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "circle", namespace: "*"}], []}]}]}
 
 # No namespace (elements without namespace)
 Selector.parse("|path")
-# => [[{:rule, [{:tag_name, "path", namespace: ""}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "path", namespace: ""}], []}]}]}
 
 # Default namespace with universal selector
 Selector.parse("*|*")
-# => [[{:rule, [{:tag_name, "*", namespace: "*"}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:tag_name, "*", namespace: "*"}], []}]}]}
 
 # Namespace in attribute selectors
 Selector.parse("[xlink|href]")
-# => [[{:rule, [{:attribute, {:exists, "href", nil, namespace: "xlink"}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:exists, "href", nil, namespace: "xlink"}}], []}]}]}
 
 # Namespace with attribute value
 Selector.parse("[xml|lang='en']")
-# => [[{:rule, [{:attribute, {:equal, "lang", "en", namespace: "xml"}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:equal, "lang", "en", namespace: "xml"}}], []}]}]}
 
 # Complex example with SVG
 Selector.parse("svg|svg > svg|g svg|rect.highlight")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "svg", namespace: "svg"}], []},
 #      {:rule, [{:tag_name, "g", namespace: "svg"}], combinator: ">"},
 #      {:rule, [{:tag_name, "rect", namespace: "svg"}, {:class, "highlight"}], []}
-#    ]]
+#    ]}]}
 
 # MathML namespace example
 Selector.parse("math|mrow > math|mi + math|mo")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "mrow", namespace: "math"}], []},
 #      {:rule, [{:tag_name, "mi", namespace: "math"}], combinator: ">"},
 #      {:rule, [{:tag_name, "mo", namespace: "math"}], combinator: "+"}
-#    ]]
+#    ]}]}
 ```
 
 ### 🔗 Combinators
@@ -218,38 +218,38 @@ Selector.parse("math|mrow > math|mi + math|mo")
 ```elixir
 # Descendant combinator (space)
 Selector.parse("article p")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "article", []}], []}, 
 #      {:rule, [{:tag_name, "p", []}], []}
-#    ]]
+#    ]}]}
 
 # Child combinator (>)
 Selector.parse("ul > li")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "ul", []}], []}, 
 #      {:rule, [{:tag_name, "li", []}], combinator: ">"}
-#    ]]
+#    ]}]}
 
 # Adjacent sibling combinator (+)
 Selector.parse("h1 + p")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "h1", []}], []}, 
 #      {:rule, [{:tag_name, "p", []}], combinator: "+"}
-#    ]]
+#    ]}]}
 
 # General sibling combinator (~)
 Selector.parse("h1 ~ p")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "h1", []}], []}, 
 #      {:rule, [{:tag_name, "p", []}], combinator: "~"}
-#    ]]
+#    ]}]}
 
 # Column combinator (||) - CSS Level 4
 Selector.parse("col || td")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:tag_name, "col", []}], []}, 
 #      {:rule, [{:tag_name, "td", []}], combinator: "||"}
-#    ]]
+#    ]}]}
 ```
 
 ### 🏷️ Attribute Selectors
@@ -257,39 +257,39 @@ Selector.parse("col || td")
 ```elixir
 # Existence
 Selector.parse("[disabled]")
-# => [[{:rule, [{:attribute, {:exists, "disabled", nil, []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:exists, "disabled", nil, []}}], []}]}]}
 
 # Exact match
 Selector.parse("[type=submit]")
-# => [[{:rule, [{:attribute, {:equal, "type", "submit", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:equal, "type", "submit", []}}], []}]}]}
 
 # Whitespace-separated list contains
 Selector.parse("[class~=primary]")
-# => [[{:rule, [{:attribute, {:includes, "class", "primary", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:includes, "class", "primary", []}}], []}]}]}
 
 # Dash-separated list starts with
 Selector.parse("[lang|=en]")
-# => [[{:rule, [{:attribute, {:dash_match, "lang", "en", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:dash_match, "lang", "en", []}}], []}]}]}
 
 # Starts with
 Selector.parse("[href^='https://']")
-# => [[{:rule, [{:attribute, {:prefix, "href", "https://", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:prefix, "href", "https://", []}}], []}]}]}
 
 # Ends with
 Selector.parse("[src$='.png']")
-# => [[{:rule, [{:attribute, {:suffix, "src", ".png", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:suffix, "src", ".png", []}}], []}]}]}
 
 # Contains substring
 Selector.parse("[title*='important']")
-# => [[{:rule, [{:attribute, {:substring, "title", "important", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:substring, "title", "important", []}}], []}]}]}
 
 # Case-insensitive matching (CSS Level 4)
 Selector.parse("[type=email i]")
-# => [[{:rule, [{:attribute, {:equal, "type", "email", case_sensitive: false}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:equal, "type", "email", case_sensitive: false}}], []}]}]}
 
 # Case-sensitive matching (CSS Level 4)
 Selector.parse("[class=Button s]")
-# => [[{:rule, [{:attribute, {:equal, "class", "Button", case_sensitive: true}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:attribute, {:equal, "class", "Button", case_sensitive: true}}], []}]}]}
 ```
 
 ### 🎭 Pseudo-classes
@@ -297,60 +297,60 @@ Selector.parse("[class=Button s]")
 ```elixir
 # Simple pseudo-classes
 Selector.parse(":hover")
-# => [[{:rule, [{:pseudo_class, {"hover", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"hover", []}}], []}]}]}
 
 # Structural pseudo-classes
 Selector.parse(":first-child")
-# => [[{:rule, [{:pseudo_class, {"first-child", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"first-child", []}}], []}]}]}
 
 # :nth-child with various formulas
 Selector.parse(":nth-child(2n+1)")
-# => [[{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 1]]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 1]]}}], []}]}]}
 
 Selector.parse(":nth-child(odd)")
-# => [[{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 1]]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 1]]}}], []}]}]}
 
 Selector.parse(":nth-child(even)")
-# => [[{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 0]]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"nth-child", [[a: 2, b: 0]]}}], []}]}]}
 
 Selector.parse(":nth-child(5)")
-# => [[{:rule, [{:pseudo_class, {"nth-child", [[a: 0, b: 5]]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"nth-child", [[a: 0, b: 5]]}}], []}]}]}
 
 # Language pseudo-class
 Selector.parse(":lang(en-US)")
-# => [[{:rule, [{:pseudo_class, {"lang", ["en-US"]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"lang", ["en-US"]}}], []}]}]}
 
 # Negation pseudo-class
 Selector.parse(":not(.disabled)")
-# => [[{:rule, [{:pseudo_class, {"not", [
-#        [[{:rule, [{:class, "disabled"}], []}]]
-#      ]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"not", [
+#        [{:rules, [{:rule, [{:class, "disabled"}], []}]}]
+#      ]}}], []}]}]}
 
 # CSS Level 4 pseudo-classes
 Selector.parse(":is(h1, h2, h3)")
-# => [[{:rule, [{:pseudo_class, {"is", [
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"is", [
 #        [
-#          [{:rule, [{:tag_name, "h1", []}], []}],
-#          [{:rule, [{:tag_name, "h2", []}], []}],
-#          [{:rule, [{:tag_name, "h3", []}], []}]
+#          {:rules, [{:rule, [{:tag_name, "h1", []}], []}]},
+#          {:rules, [{:rule, [{:tag_name, "h2", []}], []}]},
+#          {:rules, [{:rule, [{:tag_name, "h3", []}], []}]}
 #        ]
-#      ]}}], []}]]
+#      ]}}], []}]}]}
 
 Selector.parse(":where(article, section) > p")
-# => [[
+# => {:selectors, [{:rules, [
 #      {:rule, [{:pseudo_class, {"where", [
 #        [
-#          [{:rule, [{:tag_name, "article", []}], []}],
-#          [{:rule, [{:tag_name, "section", []}], []}]
+#          {:rules, [{:rule, [{:tag_name, "article", []}], []}]},
+#          {:rules, [{:rule, [{:tag_name, "section", []}], []}]}
 #        ]
 #      ]}}], []},
 #      {:rule, [{:tag_name, "p", []}], combinator: ">"}
-#    ]]
+#    ]}]}
 
 Selector.parse(":has(> img)")
-# => [[{:rule, [{:pseudo_class, {"has", [
-#        [[{:rule, [{:tag_name, "img", []}], combinator: ">"}]]
-#      ]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_class, {"has", [
+#        [{:rules, [{:rule, [{:tag_name, "img", []}], combinator: ">"}]}]
+#      ]}}], []}]}]}
 ```
 
 ### 🎨 Pseudo-elements
@@ -358,35 +358,35 @@ Selector.parse(":has(> img)")
 ```elixir
 # Standard pseudo-elements
 Selector.parse("::before")
-# => [[{:rule, [{:pseudo_element, {"before", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"before", []}}], []}]}]}
 
 Selector.parse("::after")
-# => [[{:rule, [{:pseudo_element, {"after", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"after", []}}], []}]}]}
 
 Selector.parse("::first-line")
-# => [[{:rule, [{:pseudo_element, {"first-line", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"first-line", []}}], []}]}]}
 
 Selector.parse("::first-letter")
-# => [[{:rule, [{:pseudo_element, {"first-letter", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"first-letter", []}}], []}]}]}
 
 # CSS Level 4 pseudo-elements
 Selector.parse("::placeholder")
-# => [[{:rule, [{:pseudo_element, {"placeholder", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"placeholder", []}}], []}]}]}
 
 Selector.parse("::selection")
-# => [[{:rule, [{:pseudo_element, {"selection", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"selection", []}}], []}]}]}
 
 # Pseudo-elements with parameters
 Selector.parse("::slotted(span)")
-# => [[{:rule, [{:pseudo_element, {"slotted", [[[{:rule, [{:tag_name, "span", []}], []}]]]}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"slotted", [[{:rules, [{:rule, [{:tag_name, "span", []}], []}]}]]}}], []}]}]}
 
 # Legacy single-colon syntax (still supported)
 Selector.parse(":before")
-# => [[{:rule, [{:pseudo_element, {"before", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"before", []}}], []}]}]}
 
 # Vendor-specific pseudo-elements
 Selector.parse("::-webkit-input-placeholder")
-# => [[{:rule, [{:pseudo_element, {"-webkit-input-placeholder", []}}], []}]]
+# => {:selectors, [{:rules, [{:rule, [{:pseudo_element, {"-webkit-input-placeholder", []}}], []}]}]}
 ```
 
 ### 💪 Advanced Examples
@@ -438,20 +438,17 @@ Selector.render(ast)
 # Strict mode (default: true)
 # Disables identifiers starting with double hyphens
 Selector.parse("#--custom-id", strict: false)
-# => [{:rule, [{:id, "--custom-id"}], []}]
-
-# Custom syntax options
-# Limit which CSS features are allowed
-Selector.parse("div:hover", syntax: %{tag: true})
-# Raises ArgumentError: "Pseudo-classes are not enabled."
+# => {:selectors, [{:rules, [{:rule, [{:id, "--custom-id"}], []}]}]}
 ```
 
 ## 🌳 AST Structure
 
 The parser generates an AST with the following structure:
 
-- Each selector is wrapped in a `{:rule, selectors, options}` tuple
-- Multiple selectors are returned as a list of rules
+- The top-level structure is `{:selectors, [selector_groups]}`
+- Each selector group is `{:rules, [rules]}`
+- Each rule is `{:rule, selectors, options}`
+- Multiple selector groups (comma-separated) are returned as separate elements in the list
 - Combinators are stored in the options of the following rule
 
 ### 🎯 Selector Types
